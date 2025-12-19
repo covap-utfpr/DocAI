@@ -27,21 +27,41 @@ def extract_text_from_image(model_name, image_path):
     img_b64 = image_to_base64(image_path)
 
     prompt = """
-Você é um modelo OCR.  
-Sua única tarefa é analisar a imagem fornecida e retornar o texto detectado no formato estrito abaixo:
+You are an OCR model.
 
-OCR='<texto_detectado>', score=<pontuação>, bbox=[x1,y1,x2,y2]
+Your only task is to analyze the provided image and return the detected text in the strict format below:
 
-Regras:
-- Não explique nada.
-- Não adicione comentários.
-- Não inclua nenhuma outra informação além das linhas OCR.
-- Cada detecção deve estar em uma nova linha.
-- Preserve vírgulas, pontos, acentos e símbolos exatamente como aparecem.
-- Preserve o score com duas casas decimais quando possível.
-- Preserve o formato do bbox exatamente como: [x1,y1,x2,y2].
+OCR='<detected_text>', score=<score>, bbox=[x1,y1,x2,y2]
 
-Agora processe a imagem enviada e retorne APENAS as linhas OCR nesse formato.
+Rules:
+
+- Do not explain anything.
+
+- Do not add comments.
+
+- Do not include any information other than the OCR lines.
+
+- Each detection must be on a new line.
+
+- Preserve commas, periods, accents, and symbols exactly as they appear.
+
+- Preserve the score with two decimal places when possible.
+
+- Preserve the bbox format exactly as: [x1,y1,x2,y2].
+
+- CORRECT Output:
+OCR='7896419716273', score=0.95, bbox=[50,250,120,260]
+OCR='File Coxas Sobre 1kg', score=0.94, bbox=[120,250,250,260]
+OCR='1', score=0.97, bbox=[250,250,260,260]
+OCR='Un', score=0.96, bbox=[260,250,280,260]
+OCR='15.79', score=0.96, bbox=[280,250,320,260]
+OCR='15.79', score=0.96, bbox=[320,250,350,260]
+
+- WRONG OUTPUT:
+
+OCR='7896419716273 File Coxas Sobre 1kg...', score=0.95, bbox=[10,230,200,250]
+
+Now process the uploaded image and return ONLY the OCR lines in this format.
 """
 
     payload = {

@@ -49,7 +49,7 @@ Rules:
 
 - Preserve the bbox format exactly as: [x1,y1,x2,y2].
 
-- CORRECT Output:
+- EXAMPLE REFERENCE FOR CORRECT OUTPUT:
 OCR='7896419716273', score=0.95, bbox=[50,250,120,260]
 OCR='File Coxas Sobre 1kg', score=0.94, bbox=[120,250,250,260]
 OCR='1', score=0.97, bbox=[250,250,260,260]
@@ -57,9 +57,10 @@ OCR='Un', score=0.96, bbox=[260,250,280,260]
 OCR='15.79', score=0.96, bbox=[280,250,320,260]
 OCR='15.79', score=0.96, bbox=[320,250,350,260]
 
-- WRONG OUTPUT:
-
+- EXAMPLE REFERENCE FOR WRONG OUTPUT:
 OCR='7896419716273 File Coxas Sobre 1kg...', score=0.95, bbox=[10,230,200,250]
+
+DO NOT INCLUDE THIS EXAMPLE IN THE MODEL OUTPUT.
 
 Now process the uploaded image and return ONLY the OCR lines in this format.
 """

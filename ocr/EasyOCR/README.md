@@ -1,6 +1,6 @@
-# 📄 Projeto OCR com EasyGUI + Matplotlib
+# 📄 Projeto OCR com EasyOCR + Matplotlib
 
-Bem-vindo ao projeto de **Reconhecimento Óptico de Caracteres (OCR)** utilizando **EasyGUI** integrado ao **Matplotlib** para visualização dos resultados. 
+Bem-vindo ao projeto de **Reconhecimento Óptico de Caracteres (OCR)** utilizando **EasyOCR** integrado ao **Matplotlib** para visualização dos resultados. 
 
 Projetado para ser simples de usar e com suporte a uma interface gráfica para testes manuais.
 
@@ -54,10 +54,9 @@ python3.12 EasyOCR.py pasta_de_imagens/
 ```
 O script identifica automaticamente cada arquivo válido e processa tudo em sequência (nesse modo de terminal ele não exibe em tela a plotagem, mas salva em Results_OCR).
 
-```
 🆘 Ajuda integrada   
 Para visualizar o menu de ajuda:
-```
+```bash  
 python3.12 EasyOCR.py --help
 ```
 

@@ -194,7 +194,7 @@ def main():                                                                     
     # ABA 5 — GRÁFICO LONGO DE ACERTOS/ERROS
     # ---------------------------------------------
     ws5 = wb.create_sheet("Grafico")                                # Quinta aba para gráfico        
-    for nome in enumerate(nomes_cupons):                            # Para cada cupom analisado
+    for i, nome in enumerate(nomes_cupons):                            # Para cada cupom analisado
         ws5.append([nome] + df_resultado[nome].astype(int).tolist())# Adiciona os dados do cupom (1 para True, 0 para false)
     itens_base = df_resultado["ITEM_BASE"].tolist()                 # Para o eixo X do gráfico
     x = range(len(itens_base))                                      # Eixo X numérico com base no número de itens

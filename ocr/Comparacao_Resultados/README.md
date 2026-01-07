@@ -13,7 +13,7 @@ O sistema gera relatórios completos em **Excel**, métricas clássicas de class
 - Calcular métricas de desempenho (TP, FP, FN, etc.)
 - Gerar relatórios profissionais em `.xlsx`
 - Visualizar padrões de erro e acerto entre diferentes OCRs
-
+- Suportar automaticamente arquivos **TXT (OCR)** e **JSON estruturado**
 ---
 
 ## 🧠 Tecnologias Utilizadas
@@ -38,19 +38,42 @@ Recomenda-se o uso de ambiente virtual (venv).
 
 🧾 Formato dos Arquivos de Entrada
 
+O tipo de arquivo é detectado automaticamente com base na extensão ou conteúdo.
+
+📄 TXT (OCR)
 Os arquivos .txt devem conter linhas no padrão:
 ```bash
 OCR='Texto reconhecido pelo OCR'
 ```
 O script extrai automaticamente o conteúdo entre OCR='...'.
 
+🗂️ JSON (Estruturado)
+Estrutura esperada (preferencial):
+```
+{
+  "itens": [
+    {
+      "codigo": "123",
+      "descricao": "PRODUTO X",
+      "quantidade": 2,
+      "preco_unitario": 10.00,
+      "preco_total": 20.00
+    }
+  ]
+}
+```
+Campos relevantes são automaticamente tokenizados.
+Caso a estrutura não seja detectada, o sistema realiza fallback, tokenizando todo o conteúdo JSON.
+
+
 ▶️ Como Usar
 Execução via terminal
 ```bash
-python3 compare.py base.txt cupom1.txt cupom2.txt cupom3.txt
+python3 compare.py base.json cupom1.txt cupom2.json cupom3.txt
 ```
 O primeiro arquivo é sempre tratado como base de referência
 Os demais são cupons comparativos
+Arquivos .txt e .json podem ser combinados livremente
 
 🔍 Funcionamento Interno
 
@@ -101,7 +124,7 @@ O script gera um arquivo .xlsx com as seguintes abas:
 - Base para visualização longitudinal
 - Gráfico salvo como:
 ```
-grafico_acertos_erros_longo.png
+grafico_comparacao_<nome_base>.png
 ```
 
 ##  📌 Observações finais

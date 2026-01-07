@@ -1,14 +1,14 @@
-# 🧠 Projeto Ollama Gladiator — OCR Multimodelo com LLMs Visuais
+# 🧠 Ollama Gladiator — Benchmark de LLMs Multimodais Instalados via Ollama
 
-Bem-vindo ao **Ollama Gladiator**, um projeto de **OCR baseado em LLMs Multimodais**, utilizando **Ollama** como backend para execução local dos modelos.
+Bem-vindo ao **Ollama Gladiator**, um projeto de **OCR baseado em LLMs Multimodais**, utilizando o **Ollama** como backend para execução local dos modelos multimodais instalados.
 
-A proposta é comparar o uso de diversos modelos de LLM “em uma arena” e comparar sua capacidade de extrair texto de imagens de forma estruturada.
+A proposta do projeto consiste na avaliação comparativa de diferentes LLMs multimodais “em uma arena”, com foco na extração de texto estruturado a partir de imagens.
 
 ---
 
 ## 🚀 Objetivo
 
-O objetivo do projeto é **extrair texto de imagens utilizando modelos multimodais do Ollama**, forçando uma saída **padronizada**.
+O objetivo do projeto é **extrair texto de imagens utilizando modelos multimodais do Ollama**, forçando uma saída **padronizada e estruturada**.
 
 Cada modelo processa a mesma imagem e gera:
 
@@ -23,7 +23,7 @@ Tudo isso de forma automatizada e totalmente local.
 ## 🧠 Tecnologias e Estrutura
 
 - **Ollama**: Execução local dos modelos LLM (API REST na porta `11434`)
-- **LLMs Visuais** (podem ser modificados conforme os modelos instalados em sua máquina):
+- **LLMs Multimodais Visuais** (podem ser modificados conforme os modelos instalados)
   - `llama3.2-vision`
   - `gemma3`
   - `ministral-3`
@@ -39,9 +39,9 @@ Tudo isso de forma automatizada e totalmente local.
 ### 1️⃣ Pré-requisitos
 
 - Python **3.10+**
-- Ollama instalado e funcional (disponivel em https://ollama.com/download)
-- Modelos multimodais previamente baixados
-- Ollama serve rodando em background.
+- Ollama instalado e funcional (disponível em https://ollama.com/download)
+- Modelos multimodais previamente baixados (disponível em https://ollama.com/search?c=vision) 
+- Serviço do Ollama rodando em background
 
 Exemplo de ativação do Ollama:
 ```bash

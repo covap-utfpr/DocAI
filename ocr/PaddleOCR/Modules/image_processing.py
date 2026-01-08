@@ -150,7 +150,7 @@ def process_image(img_path):
         else:        
             txt_filename = os.path.join(path.results, f"{name_no_ext}_Paddle_ocr_NoSpellCorrected.txt")
             plot_filename = os.path.join(path.results, f"{name_no_ext}_Paddle_plotagem_NoSpellCorrected.png")
-            name = f"{name_no_ext}_Paddle_JsonProcessing_NoSpellCorrected"
+            name = f"{name_no_ext}_PaddleOCR_JsonProcessing_NoSpellCorrected"
            # save_json(filename=f"{name_no_ext}_JsonProcessing_NoSpellCorrected", output_dir=path.results)  # Salva o JSON no diretório de resultados sem correção ortográfica
     else:
         if spellcorrector == True:

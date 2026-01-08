@@ -97,7 +97,8 @@ def process_image(img_path, its_console=False):
         palavras_linha = [t["text"] for t in linha]
         to_json(palavras_linha)  
     create_json()
-    save_json(filename=name_no_ext, output_dir=RESULT_DIR)
+    json_name = f"{name_no_ext}_EasyOCR_JsonProcessing"
+    save_json(filename=json_name, output_dir=RESULT_DIR)
 
     print(f"[OK] TXT salvo em:      {os.path.abspath(txt_output)}")
     print(f"[OK] Imagem salva em:   {os.path.abspath(plot_output)}")

@@ -6,6 +6,7 @@ from collections import Counter
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 # ---------------------------------------------
 # Função para normalizar e quebrar texto em tokens
@@ -27,6 +28,13 @@ def extrair_json(path):
     try:
         with open(path, "r", encoding="utf-8") as arquivo:
             data = json.load(arquivo)
+
+            # Processa campos de cabeçalho
+            campos_cabecalho = ["chave_de_acesso", "cnpj_estabelecimento", "cpf", "data_emissao", "nome_estabelecimento", "total_itens", "valor_total", "valor_total_pago"]
+            for campo in campos_cabecalho:
+                if campo in data and data[campo]:
+                    tokens = normalizar_e_tokenizar(str(data[campo]))
+                    tokens_totais.extend(tokens)   
 
             # Processa a lista de itens
             if "itens" in data and isinstance(data["itens"], list):
@@ -150,6 +158,29 @@ def calcular_metricas(base, cupom, contem):                 # Métricas de class
         "F1": f1                # F1 Score
     }
 
+
+# ---------------------------------------------
+# Calcular granlaridade entre dois conjuntos de tokens
+# ---------------------------------------------
+def granularidade(tokens_a, tokens_b):
+    """Porcentagem de tokens de 'tokens_a' presentes em 'tokens_b'"""
+    if not tokens_a:
+        return 0
+    count_a = Counter(tokens_a)
+    count_b = Counter(tokens_b)
+    total = sum(count_a.values())
+    encontrados = sum(min(count_a[t], count_b.get(t,0)) for t in count_a)
+    return (encontrados / total) * 100
+
+def criar_matriz_granularidade(cupons_tokens, nomes_cupons):
+    """Cria DataFrame de granularidade cruzando todos os cupons"""
+    matriz = pd.DataFrame(index=nomes_cupons, columns=nomes_cupons, dtype=float)
+    for i, nome_i in enumerate(nomes_cupons):
+        for j, nome_j in enumerate(nomes_cupons):
+            matriz.loc[nome_i, nome_j] = granularidade(cupons_tokens[nome_i], cupons_tokens[nome_j])
+    return matriz
+
+
 # ---------------------------------------------
 # MAIN
 # ---------------------------------------------
@@ -162,7 +193,7 @@ def main():                                                                     
     base_path = sys.argv[1]                                                         # Caminho do arquivo base
     base_nome = base_path.replace(".txt", "").replace(".json", "").split("/")[-1]   # Nome da base sem extensão e caminho
     base = extrair_tokens(base_path)                                                # Extrai tokens da base (função)
-    print(f"Base '{base_nome}' carregada: {len(base)} tokens")                      # Mensagem de status
+    print(f"Base '{base_nome}' carregada: {len(base)} tokens\n")                    # Mensagem de status
     cupons_paths = sys.argv[2:]                                                     # Caminhos dos arquivos de cupons a serem comparados  
     nomes_cupons = [p.replace(".txt", "").split("/")[-1] for p in cupons_paths]     # Nomes dos cupons sem extensão e caminho
     df_resultado = pd.DataFrame({"ITEM_BASE": base})                                # DataFrame para resultados (booleanos) 
@@ -172,8 +203,10 @@ def main():                                                                     
     # ---------------------------------------------
     # Loop pelos cupons
     # ---------------------------------------------
+    cupons_tokens = {}                                                  # Dicionário para armazenar tokens de cada cupom
     for path, nome in zip(cupons_paths, nomes_cupons):                  # Para cada caminho e nome de cupom em zip (lista paralela)
         cupom = extrair_tokens(path)                                    # Extrai tokens do cupom (função)
+        cupons_tokens[nome] = cupom                                     # Armazena os tokens no dicionário
         print(f"Cupom '{nome}' carregado: {len(cupom)} tokens")         # Mensagem de status 
         contem, conteudo = comparar_consumindo(base, cupom)             # Compara base e cupom (função)
         df_resultado[nome] = contem                                     # DataFrame de resultados (booleanos)
@@ -248,11 +281,44 @@ def main():                                                                     
         ws4.append([item, acertos, erros, consenso])                    # Adiciona a linha na planilhaa
         ws4.cell(row=ws4.max_row, column=4).fill = fill                 # Pinta a célula de consenso
     
-    # ABA 5 — GRÁFICO LONGO DE ACERTOS/ERROS    
+    # ABA 5 — GRÁFICO LONGO DE ACERTOS/ERROS + MATRIZ DE GRANULARIDADE   
     if len(base) > 0 and len(nomes_cupons) > 0:                         # Verificação antes de gerar o gráfico
-        ws5 = wb.create_sheet("Grafico")                                # Quinta aba para gráfico        
+        ws5 = wb.create_sheet("Grafico_Granularidade")                  # Quinta aba para gráfico        
         for i, nome in enumerate(nomes_cupons):                         # Para cada cupom analisado
-            ws5.append([nome] + df_resultado[nome].astype(int).tolist())# Adiciona os dados do cupom (1 para True, 0 para false)
+            ws5.append([nome] + df_resultado[nome].astype(int).tolist())# Adiciona os dados do cupom (1 para True, 0 para false)        
+        # -----------------------------
+        # Criar matriz de granularidade
+        # -----------------------------
+        def granularidade(tokens_a, tokens_b):                                                              # Porcentagem de tokens de 'tokens_a' presentes em 'tokens_b'
+            if not tokens_a:                                                                                # Se tokens_a está vazio
+                return 0                                                                                    # Retorna 0
+            count_a = Counter(tokens_a)                                                                     # Contador de tokens_a
+            count_b = Counter(tokens_b)                                                                     # Contador de tokens_b
+            total = sum(count_a.values())                                                                   # Total de tokens em A
+            encontrados = sum(min(count_a[t], count_b.get(t, 0)) for t in count_a)                          # Total de tokens em B
+            return (encontrados / total) * 100                                                              # Retorna a porcentagem de granularidade = (encontrados / total) * 100
+        df_gran = pd.DataFrame(index=nomes_cupons, columns=nomes_cupons, dtype=float)                       # DataFrame para armazenar a matriz de granularidade
+        for i, n1 in enumerate(nomes_cupons):                                                               # Para cada cupom n1
+            for j, n2 in enumerate(nomes_cupons):                                                           # Para cada cupom n2
+                df_gran.loc[n1, n2] = granularidade(cupons_tokens[n1], cupons_tokens[n2])                   # Calcula a granularidade entre n1 e n2
+                                                                                                            
+        ws5.append([])                                                                                      # linha em branco
+        ws5.append(["Granularidade (%)"] + list(df_gran.columns))                                           # Cabeçaalho da matriz de granularidade 
+        for idx, row in df_gran.iterrows():                                                                 # Para cada linha da matriz de granularidade 
+            ws5.append([idx] + row.tolist())                                                                # Adiciona a linha na planilha
+
+        plt.figure(figsize=(max(len(nomes_cupons)*0.8, 8), max(len(nomes_cupons)*0.5, 6)))                  # Figura do tamanho dinâmico baseado no número de cupons
+        sns.heatmap(df_gran, annot=True, fmt=".1f", cmap="YlGnBu", cbar_kws={'label': '% Granularidade'})   # Mapa de calor com anotações
+        plt.title(f"Matriz de Granularidade - {base_nome}")                                                 # Título do gráfico
+        plt.tight_layout()                                                                                  # Ajuste automático do layoult
+        png_name = f"granularidade_{base_nome}.png"                                                         # Nome do arquivo PNG de saída
+        plt.savefig(png_name)                                                                               # Salva a figura como PNG
+        plt.close()                                                                                         # Fecha a figura para liberar memória
+        print(f"Matriz de granularidade salva como PNG: {png_name}")                                        # Mensagem de status
+
+        # -----------------------------
+        # Gráfico longo de acertos/erros
+        # -----------------------------
         itens_base = df_resultado["ITEM_BASE"].tolist()                 # Para o eixo X do gráfico
         x = range(len(itens_base))                                      # Eixo X numérico com base no número de itens
         plt.figure(figsize=(max(len(itens_base)*0.4, 8), 6))            # Figura maior para muitos itens, ajustando largura baseado em número de itens, altura fixa 
@@ -260,20 +326,20 @@ def main():                                                                     
         for i, nome in enumerate(nomes_cupons):                         # Para cada cupom analisado
             y = df_resultado[nome].astype(int) + i*offset               # Eixo Y com offset para visualização
             plt.plot(x, y, marker='o', label=nome)                      # Plota a linha com marcadores
-        save_name = (f"grafico_comparacao_{base_nome}_" + ".png")       # Nome do arquivo de saída a ser salvo
-
+        
         plt.xticks(x, itens_base, rotation=90)                          # Mostra os nomes dos itens na horizontal
         plt.xlabel("Item Base")                                         # Rótulo do eixo X
         plt.ylabel("Acerto (1) / Erro (0)")                             # Rótulo do eixo Y
         plt.title("Acertos e Erros por Cupom")                          # Título do gráfico
-        plt.legend(loc='lower left')                                    # Legenda no canto inferior esquerdo
+        plt.legend(loc='best')                                          # Legenda no melhor local de maneira autoamtica
         plt.tight_layout()                                              # Ajuste automático do layoult
         plt.grid(True, linestyle='--', alpha=0.5)                       # Adiciona grade ao gráfico
         plt.yticks([0, 1], ["Erro (0)", "Acerto (1)"])                  # Rótulos do eixo Y
         plt.ylim(-0.1, 1 + len(nomes_cupons)*offset + 0.1)              # Limites do eixo Y    
+        save_name = (f"grafico_comparacao_{base_nome}.png")             # Nome do arquivo de saída a ser salvo
         plt.savefig(save_name)                                          # Salva o gráfico como imagm        
         plt.close()                                                     # Fecha a figura para liberar memória
-        print("Gráfico salvo: grafico_acertos_erros_longo.png")         # Mensagem de status
+        print(f"Gráfico salvo: {save_name}")                            # Mensagem de status
     else:                                                               # Se não há dados avisa
         print("AVISO: Não há dados suficientes para gerar o gráfico")   # Mensagem de aviso
     output_file = f"comparacao_{base_nome}.xlsx"                        # Salvar arquivo XLSX

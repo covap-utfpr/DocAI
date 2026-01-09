@@ -14,6 +14,7 @@ O sistema gera relatórios completos em **Excel**, métricas clássicas de class
 - Gerar relatórios profissionais em `.xlsx`
 - Visualizar padrões de erro e acerto entre diferentes OCRs
 - Suportar automaticamente arquivos **TXT (OCR)** e **JSON estruturado**
+- Organizar todos os resultados em pastas por base dentro da pasta `results`
 ---
 
 ## 🧠 Tecnologias Utilizadas
@@ -21,7 +22,7 @@ O sistema gera relatórios completos em **Excel**, métricas clássicas de class
 - **Python 3**
 - **Pandas** — Estruturação dos dados
 - **OpenPyXL** — Criação e formatação de planilhas Excel
-- **Matplotlib** — Visualização gráfica
+- **Matplotlib / Seaborn** — Visualização gráfica (acertos/erros e granularidade)
 - **Regex (re)** — Extração e limpeza dos textos OCR
 - **Counter (collections)** — Controle de consumo de tokens
 
@@ -99,7 +100,13 @@ Arquivos .txt e .json podem ser combinados livremente
 
 📁 Estrutura do Relatório Excel
 
-O script gera um arquivo .xlsx com as seguintes abas:
+Todos os arquivos são salvos na pasta:
+```
+results/<nome_base>_results/
+```
+Exemplo: ```results/minha_base_results/```
+
+O arquivo ```.xlsx``` possui as seguintes abas:
 
 🟢 Resultado
 - Indica se cada item da base foi encontrado
@@ -120,12 +127,20 @@ O script gera um arquivo .xlsx com as seguintes abas:
 - ERR (maioria erra)
 - EMPATE
 
-📉 Grafico
-- Base para visualização longitudinal
-- Gráfico salvo como:
+📉 Gráficos
+1 - Acertos e Erros por cupom
+- Salvo como:
 ```
-grafico_comparacao_<nome_base>.png
+results/<base>_results/grafico_comparacao_<base>.png
 ```
+
+2 - Matriz de Granularidade Simétrica (visualização)
+- Heatmap baseado na média de cobertura mútua entre cupons
+- Salvo como:
+```
+results/<base>_results/granularidade_<base>.png
+```
+Observação: A matriz real de granularidade (linha A em relação à coluna B) está disponível no Excel.
 
 ##  📌 Observações finais
     O projeto ainda está em desenvolvimento — fique à vontade para sugerir melhorias!

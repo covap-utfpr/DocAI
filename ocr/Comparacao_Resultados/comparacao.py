@@ -1,3 +1,4 @@
+import os
 import sys
 import re
 import json
@@ -89,18 +90,7 @@ def extrair_tokens(path):
     elif path.lower().endswith('.txt'):
         return extrair_ocr(path)
     else:
-        # Tenta detectar pelo conteúdo
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                primeira_linha = f.readline().strip()
-                # Se começa com { ou [, provavelmente é JSON
-                if primeira_linha.startswith('{') or primeira_linha.startswith('['):
-                    return extrair_json(path)
-                else:
-                    return extrair_ocr(path)
-        except:
-            # Fallback para OCR
-            return extrair_ocr(path)
+        print("Formato de arquivo não suportado. Use .txt ou .json")
 
 # ---------------------------------------------
 # Comparação entre base e cupom
@@ -158,28 +148,17 @@ def calcular_metricas(base, cupom, contem):                 # Métricas de class
         "F1": f1                # F1 Score
     }
 
-
 # ---------------------------------------------
 # Calcular granlaridade entre dois conjuntos de tokens
 # ---------------------------------------------
-def granularidade(tokens_a, tokens_b):
-    """Porcentagem de tokens de 'tokens_a' presentes em 'tokens_b'"""
-    if not tokens_a:
-        return 0
-    count_a = Counter(tokens_a)
-    count_b = Counter(tokens_b)
-    total = sum(count_a.values())
-    encontrados = sum(min(count_a[t], count_b.get(t,0)) for t in count_a)
-    return (encontrados / total) * 100
-
-def criar_matriz_granularidade(cupons_tokens, nomes_cupons):
-    """Cria DataFrame de granularidade cruzando todos os cupons"""
-    matriz = pd.DataFrame(index=nomes_cupons, columns=nomes_cupons, dtype=float)
-    for i, nome_i in enumerate(nomes_cupons):
-        for j, nome_j in enumerate(nomes_cupons):
-            matriz.loc[nome_i, nome_j] = granularidade(cupons_tokens[nome_i], cupons_tokens[nome_j])
-    return matriz
-
+def granularidade(tokens_a, tokens_b):                                              # Granularidade entre dois conjuntos de tokens    
+    if not tokens_a:                                                                # Se o conjunto A estiver vazio
+        return 0                                                                    # Retorna 0 para evitar divisão por zero
+    count_a = Counter(tokens_a)                                                     # Contador de tokens A
+    count_b = Counter(tokens_b)                                                     # Contador de tokens B
+    total = sum(count_a.values())                                                   # Total de tokens em A
+    encontrados = sum(min(count_a[t], count_b.get(t,0)) for t in count_a)           # Tokens de A encontrados em B      
+    return (encontrados / total) * 100                                              # Retorna a granularidade em porcentagem = (encontrados / total) * 100
 
 # ---------------------------------------------
 # MAIN
@@ -190,15 +169,22 @@ def main():                                                                     
         print("Aceita arquivos .txt (OCR) e .json")                                 # Instruções de uso
         return                                                                      # Encerra a função 
 
-    base_path = sys.argv[1]                                                         # Caminho do arquivo base
-    base_nome = base_path.replace(".txt", "").replace(".json", "").split("/")[-1]   # Nome da base sem extensão e caminho
+    base_path = sys.argv[1]                                                         # Caminho do arquivo base    
+    base_nome = os.path.splitext(os.path.basename(base_path))[0]                    # Nome da base sem extensão e caminho
     base = extrair_tokens(base_path)                                                # Extrai tokens da base (função)
     print(f"Base '{base_nome}' carregada: {len(base)} tokens\n")                    # Mensagem de status
-    cupons_paths = sys.argv[2:]                                                     # Caminhos dos arquivos de cupons a serem comparados  
-    nomes_cupons = [p.replace(".txt", "").split("/")[-1] for p in cupons_paths]     # Nomes dos cupons sem extensão e caminho
+    cupons_paths = sys.argv[2:]                                                     # Caminhos dos arquivos de cupons a serem comparados      
+    nomes_cupons = [os.path.splitext(os.path.basename(p))[0] for p in cupons_paths] # Nomes dos cupons sem extensão e caminho
     df_resultado = pd.DataFrame({"ITEM_BASE": base})                                # DataFrame para resultados (booleanos) 
     df_conteudo = pd.DataFrame({"ITEM_BASE": base})                                 # DataFrame para conteúdos encontrados 
     metricas_total = {}                                                             # Dicionário para armazenar métricas totais por cupom
+
+    # Criar pasta para resultados e subpastas
+    root_dir = "results"
+    os.makedirs(root_dir, exist_ok=True)
+
+    output_dir = os.path.join(root_dir, f"{base_nome}_results")         # Nome da pasta de resultados da detecção dentro de "results"    
+    os.makedirs(output_dir, exist_ok=True)                              # Criação da pasta de resultados
 
     # ---------------------------------------------
     # Loop pelos cupons
@@ -288,63 +274,65 @@ def main():                                                                     
             ws5.append([nome] + df_resultado[nome].astype(int).tolist())# Adiciona os dados do cupom (1 para True, 0 para false)        
         # -----------------------------
         # Criar matriz de granularidade
-        # -----------------------------
-        def granularidade(tokens_a, tokens_b):                                                              # Porcentagem de tokens de 'tokens_a' presentes em 'tokens_b'
-            if not tokens_a:                                                                                # Se tokens_a está vazio
-                return 0                                                                                    # Retorna 0
-            count_a = Counter(tokens_a)                                                                     # Contador de tokens_a
-            count_b = Counter(tokens_b)                                                                     # Contador de tokens_b
-            total = sum(count_a.values())                                                                   # Total de tokens em A
-            encontrados = sum(min(count_a[t], count_b.get(t, 0)) for t in count_a)                          # Total de tokens em B
-            return (encontrados / total) * 100                                                              # Retorna a porcentagem de granularidade = (encontrados / total) * 100
+        # -----------------------------        
         df_gran = pd.DataFrame(index=nomes_cupons, columns=nomes_cupons, dtype=float)                       # DataFrame para armazenar a matriz de granularidade
         for i, n1 in enumerate(nomes_cupons):                                                               # Para cada cupom n1
             for j, n2 in enumerate(nomes_cupons):                                                           # Para cada cupom n2
                 df_gran.loc[n1, n2] = granularidade(cupons_tokens[n1], cupons_tokens[n2])                   # Calcula a granularidade entre n1 e n2
-                                                                                                            
+
+        # Matriz simétrica para visualização (heatmap mais intuitivo)
+        df_gran_sim = pd.DataFrame(index=nomes_cupons, columns=nomes_cupons, dtype=float)                   # DataFrame para matriz simétrica
+        for n1 in nomes_cupons:                                                                             # Para cada cupom n1
+            for n2 in nomes_cupons:                                                                         # Para cada cupom n2
+                g1 = granularidade(cupons_tokens[n1], cupons_tokens[n2])                                    # Calculla a granularidade A em B
+                g2 = granularidade(cupons_tokens[n2], cupons_tokens[n1])                                    # Calculla a granularidade B em A
+                df_gran_sim.loc[n1, n2] = (g1 + g2)/2                                                       # Média das granularidades para simetria        
+
         ws5.append([])                                                                                      # linha em branco
         ws5.append(["Granularidade (%)"] + list(df_gran.columns))                                           # Cabeçaalho da matriz de granularidade 
         for idx, row in df_gran.iterrows():                                                                 # Para cada linha da matriz de granularidade 
             ws5.append([idx] + row.tolist())                                                                # Adiciona a linha na planilha
 
         plt.figure(figsize=(max(len(nomes_cupons)*0.8, 8), max(len(nomes_cupons)*0.5, 6)))                  # Figura do tamanho dinâmico baseado no número de cupons
-        sns.heatmap(df_gran, annot=True, fmt=".1f", cmap="YlGnBu", cbar_kws={'label': '% Granularidade'})   # Mapa de calor com anotações
-        plt.title(f"Matriz de Granularidade - {base_nome}")                                                 # Título do gráfico
+        sns.heatmap(df_gran_sim, annot=True, fmt=".1f", cmap="YlGnBu", cbar_kws={'label':'% Granularidade (simétrica)'})        
+        plt.title(f"Matriz de Granularidade (A em B) - {base_nome}")                                        # Título do gráfico
+        plt.xlabel("Comparado com")                                                                         # Mensagem do eixo X
+        plt.ylabel("Base")                                                                                  # Mensagem do eixo Y
         plt.tight_layout()                                                                                  # Ajuste automático do layoult
-        png_name = f"granularidade_{base_nome}.png"                                                         # Nome do arquivo PNG de saída
+        png_name = os.path.join(output_dir, f"granularidade_{base_nome}.png")                               # Nome do arquivo PNG de saída
         plt.savefig(png_name)                                                                               # Salva a figura como PNG
-        plt.close()                                                                                         # Fecha a figura para liberar memória
-        print(f"Matriz de granularidade salva como PNG: {png_name}")                                        # Mensagem de status
+        plt.close()                                                                                         # Fecha a figura para liberar memória        
+        print(f"\nMatriz de granularidade salva como PNG: {png_name}")                                        # Mensagem de status
 
         # -----------------------------
         # Gráfico longo de acertos/erros
         # -----------------------------
-        itens_base = df_resultado["ITEM_BASE"].tolist()                 # Para o eixo X do gráfico
-        x = range(len(itens_base))                                      # Eixo X numérico com base no número de itens
-        plt.figure(figsize=(max(len(itens_base)*0.4, 8), 6))            # Figura maior para muitos itens, ajustando largura baseado em número de itens, altura fixa 
-        offset = 0.03                                                   # distância entre linhas
-        for i, nome in enumerate(nomes_cupons):                         # Para cada cupom analisado
-            y = df_resultado[nome].astype(int) + i*offset               # Eixo Y com offset para visualização
-            plt.plot(x, y, marker='o', label=nome)                      # Plota a linha com marcadores
+        itens_base = df_resultado["ITEM_BASE"].tolist()                             # Para o eixo X do gráfico
+        x = range(len(itens_base))                                                  # Eixo X numérico com base no número de itens
+        plt.figure(figsize=(max(len(itens_base)*0.4, 8), 6))                        # Figura maior para muitos itens, ajustando largura baseado em número de itens, altura fixa 
+        offset = 0.03                                                               # distância entre linhas
+        for i, nome in enumerate(nomes_cupons):                                     # Para cada cupom analisado
+            y = df_resultado[nome].astype(int) + i*offset                           # Eixo Y com offset para visualização
+            plt.plot(x, y, marker='o', label=nome)                                  # Plota a linha com marcadores
         
-        plt.xticks(x, itens_base, rotation=90)                          # Mostra os nomes dos itens na horizontal
-        plt.xlabel("Item Base")                                         # Rótulo do eixo X
-        plt.ylabel("Acerto (1) / Erro (0)")                             # Rótulo do eixo Y
-        plt.title("Acertos e Erros por Cupom")                          # Título do gráfico
-        plt.legend(loc='best')                                          # Legenda no melhor local de maneira autoamtica
-        plt.tight_layout()                                              # Ajuste automático do layoult
-        plt.grid(True, linestyle='--', alpha=0.5)                       # Adiciona grade ao gráfico
-        plt.yticks([0, 1], ["Erro (0)", "Acerto (1)"])                  # Rótulos do eixo Y
-        plt.ylim(-0.1, 1 + len(nomes_cupons)*offset + 0.1)              # Limites do eixo Y    
-        save_name = (f"grafico_comparacao_{base_nome}.png")             # Nome do arquivo de saída a ser salvo
-        plt.savefig(save_name)                                          # Salva o gráfico como imagm        
-        plt.close()                                                     # Fecha a figura para liberar memória
-        print(f"Gráfico salvo: {save_name}")                            # Mensagem de status
-    else:                                                               # Se não há dados avisa
-        print("AVISO: Não há dados suficientes para gerar o gráfico")   # Mensagem de aviso
-    output_file = f"comparacao_{base_nome}.xlsx"                        # Salvar arquivo XLSX
-    wb.save(output_file)                                                # Salva o arquivo XLSX
-    print(f"\nArquivo gerado: {output_file}")                           # Mensagem de status
+        plt.xticks(x, itens_base, rotation=90)                                      # Mostra os nomes dos itens na horizontal
+        plt.xlabel("Item Base")                                                     # Rótulo do eixo X
+        plt.ylabel("Acerto (1) / Erro (0)")                                         # Rótulo do eixo Y
+        plt.title("Acertos e Erros por Cupom")                                      # Título do gráfico
+        plt.legend(loc='best')                                                      # Legenda no melhor local de maneira autoamtica
+        plt.tight_layout()                                                          # Ajuste automático do layoult
+        plt.grid(True, linestyle='--', alpha=0.5)                                   # Adiciona grade ao gráfico
+        plt.yticks([0, 1], ["Erro (0)", "Acerto (1)"])                              # Rótulos do eixo Y
+        plt.ylim(-0.1, 1 + len(nomes_cupons)*offset + 0.1)                          # Limites do eixo Y    
+        save_name = os.path.join(output_dir, f"grafico_comparacao_{base_nome}.png") # Nome do arquivo de saída a ser salvo
+        plt.savefig(save_name)                                                      # Salva o gráfico como imagm        
+        plt.close()                                                                 # Fecha a figura para liberar memória
+        print(f"Gráfico salvo: {save_name}")                                        # Mensagem de status
+    else:                                                                           # Se não há dados avisa
+        print("AVISO: Não há dados suficientes para gerar o gráfico")               # Mensagem de aviso
+    output_file = os.path.join(output_dir, f"comparacao_{base_nome}.xlsx")          # Salvar arquivo XLSX
+    wb.save(output_file)                                                            # Salva o arquivo XLSX
+    print(f"\nArquivo gerado: {output_file}")                                       # Mensagem de status
     
     if len(base) == 0:                                                                                                  # Verifica se a base está vazia
         print("\nAVISO: A base não contém tokens! Verifique o formato do arquivo.")                                     # Se estiver, avisa o usuário

@@ -156,7 +156,7 @@ def treat_input(path):
     return frames
 
 
-frames = treat_input("/home/atosarruda/Documentos/IC - Erikson/DocAI/stitching/db/16")
+frames = treat_input("/home/atosarruda/Documentos/IC - Erikson/DocAI/stitching/db/0")
 # frames = treat_input("video-02.mp4")
 idx_base = 0
 idx_sec = 1
@@ -503,7 +503,7 @@ def stitchImages(base_image, sec_image, homography, mask_base, mask_sec):
     return st_img_2, stitched_image, mask_sec
 
 
-result_file_name = "mosaico_16.jpg"
+result_file_name = "mosaico_30.jpg"
 mosaico, _, _ = stitchImages(
     base_image=frames[idx_base],
     sec_image=frames[idx_sec],
@@ -546,6 +546,7 @@ for img2 in frames[1:]:
     matches, base_image_kp, sec_image_kp = find_matches(
         img1, img2, 0.75, debug_draw=True
     )
+
     H = find_homography(base_image_kp, sec_image_kp, matches)
     mosaico, img1, mask_img1 = stitchImages(
         base_image=mosaico,

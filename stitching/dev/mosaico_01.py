@@ -32,6 +32,7 @@ def plot_image(img, figsize_in_inches=(10, 10)):
     plt.show()
 
 
+# PQ  TEM DUAS IGUAIS????
 def plot_images(imgs, figsize_in_inches=(10, 10)):
     fig, axs = plt.subplots(1, len(imgs), figsize=figsize_in_inches)
     for col, img in enumerate(imgs):
@@ -124,6 +125,9 @@ def treat_input(path):
             img_path = os.path.join(path, name)
             print(img_path)
             frames.append(cv.imread(img_path))
+
+        # Capturar saida do numero de imagens
+        print(f"nIMAGENS:{len(frames)}")
 
         # frames = [ cv.rotate(frame, cv.ROTATE_90_CLOCKWISE) for frame in frames]
 
@@ -488,7 +492,7 @@ def stitchImages(base_image, sec_image, homography, mask_base, mask_sec):
     return st_img_2, stitched_image, mask_sec
 
 
-result_file_name = "mosaico.jpg"
+result_file_name = "mosaico_3.jpg"
 mosaico, _, _ = stitchImages(
     base_image=frames[idx_base],
     sec_image=frames[idx_sec],

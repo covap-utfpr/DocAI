@@ -4,7 +4,7 @@ ARQUIVO_LOG="resultados_mosaico.csv"
 
 # Cria o cabeçalho da tabela (se o arquivo não existir)
 if [ ! -f $ARQUIVO_LOG ]; then
-    echo "Execucao,Tempo_Segundos,Numero_Imagens,Numero_Imaagens_Coladas,Numero_Find_matching,Numero_Sift" > $ARQUIVO_LOG	
+    echo "Tempo_Segundos,Numero_Imagens,Numero_Imaagens_Coladas,Numero_Find_matching,Numero_Sift" > $ARQUIVO_LOG	
 fi
 
 # Captura o tempo de início total
@@ -42,7 +42,7 @@ do
 
 	fim_total=$(date +%s)
 
-	echo "M$j,TEMPO FINAL, $((fim_total-inicio_total))" >> $ARQUIVO_LOG
+	echo "TEMPO FINAL, $((fim_total-inicio_total))" >> $ARQUIVO_LOG
 
 	#Restaure o arquivo como estava inicialmente
 	sed -i "s|/home/atosarruda/Documentos/IC - Erikson/DocAI/stitching/db/$i|/home/atosarruda/Documentos/IC - Erikson/DocAI/stitching/db/0|g" mosaico_ercs.py

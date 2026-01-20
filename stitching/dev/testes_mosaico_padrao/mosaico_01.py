@@ -271,6 +271,7 @@ def find_matches(base_image, sec_image, threshold, debug_draw, min_matches=10):
 
     global soma_find_matching_sift
     soma_find_matching_sift += 1
+
     sift = cv.SIFT_create()
 
     sec_image_mask = find_doc_mask(sec_image)

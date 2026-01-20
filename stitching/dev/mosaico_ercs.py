@@ -24,22 +24,30 @@ import math
 As funções a seguir, permitem a axibição das imagens dentro do notbook
 """
 
-def plot_image(img, figsize_in_inches=(10,10)):
+
+def plot_image(img, figsize_in_inches=(10, 10)):
     fig, ax = plt.subplots(figsize=figsize_in_inches)
-    ax.imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB)) # o padrão de opencv é BGR e precisa ser convertido
+    ax.imshow(
+        cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    )  # o padrão de opencv é BGR e precisa ser convertido
     plt.show()
 
-def plot_images(imgs, figsize_in_inches=(10,10)):
+
+def plot_images(imgs, figsize_in_inches=(10, 10)):
     fig, axs = plt.subplots(1, len(imgs), figsize=figsize_in_inches)
     for col, img in enumerate(imgs):
-        axs[col].imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB)) # o padrão de opencv é BGR e precisa ser convertido
+        axs[col].imshow(
+            cv.cvtColor(img, cv.COLOR_BGR2RGB)
+        )  # o padrão de opencv é BGR e precisa ser convertido
     plt.show()
 
-red_color = (0,0,255)
+
+red_color = (0, 0, 255)
 
 """# Leitura das imagens de entrada
 O caminho de entrada pode apontar para um vídeo ou para um diretório contendo uma coleção de imagens ordenadas, que representam os frames de um video
 """
+
 
 def ler_video(path):
 
@@ -69,6 +77,7 @@ def ler_video(path):
 
     return frames
 
+
 def alinhamento(frame, pontos_inicio):
 
     old_initial_points = pontos_inicio
@@ -79,12 +88,9 @@ def alinhamento(frame, pontos_inicio):
     max_y = 2867
     largura = max_x - min_x
     altura = max_y - min_y
-    new_final_ponts = np.float32([
-                                        [min_x,   min_y],
-                                        [max_x,  min_y],
-                                        [min_x,   max_y],
-                                        [max_x,  max_y]
-    ])
+    new_final_ponts = np.float32(
+        [[min_x, min_y], [max_x, min_y], [min_x, max_y], [max_x, max_y]]
+    )
     # estes valores são arbitrários
 
     # teste de ajuste para planificar a imagem
@@ -92,18 +98,19 @@ def alinhamento(frame, pontos_inicio):
 
     print(new_homography)
 
-    #novo_frame = cv.warpPerspective(frame, new_homography, (frame.shape[1],frame.shape[0]))
-    novo_frame = cv.warpPerspective(frame, new_homography, (largura,altura))
+    # novo_frame = cv.warpPerspective(frame, new_homography, (frame.shape[1],frame.shape[0]))
+    novo_frame = cv.warpPerspective(frame, new_homography, (largura, altura))
 
     return novo_frame
 
+
 def treat_input(path):
     if os.path.isfile(path):
-        if path.lower().endswith(('.mp4', '.avi')):
+        if path.lower().endswith((".mp4", ".avi")):
             print("é um video: separar os frames e colocar na pasta frames")
 
             frames = ler_video(path)
-            cont=0
+            cont = 0
             for frame in frames:
                 cv.imwrite(f"frames/img-{cont:04}.jpg", frame)
                 print(f"img-{cont:04}")
@@ -112,106 +119,61 @@ def treat_input(path):
     else:
         print("é um conjunto de imagens: ler as imagens em sequencia")
 
-        names = [i for i in os.listdir(path) if i.endswith('.jpg')]
-        frames= []
+        names = [i for i in os.listdir(path) if i.endswith(".jpg")]
+        frames = []
         for name in sorted(names):
-            img_path = os.path.join(path,name)
-            print( img_path )
-            frames.append( cv.imread(img_path))
+            img_path = os.path.join(path, name)
+            print(img_path)
+            frames.append(cv.imread(img_path))
 
         # frames = [ cv.rotate(frame, cv.ROTATE_90_CLOCKWISE) for frame in frames]
 
         pontos_inicio = [
-                     np.float32([   [371,   628],
-                                        [4021,  728],
-                                        [338,   2556],
-                                        [4020,  2562]
-                                ]),
-
-                     np.float32([   [16,   774],
-                                        [3996,  781],
-                                        [36,   2487],
-                                        [4002,  2487]
-                                ]),
-
-                     np.float32([   [222,   594],
-                                        [3962,  874],
-                                        [236,   2174],
-                                        [3882,  2454]
-                                ]),
-
-                     np.float32([   [296,   827],
-                                        [3802,  734],
-                                        [316,   2654],
-                                        [3956,  2627]
-                                ]),
-
-                     np.float32([   [149,   747],
-                                        [3856,  701],
-                                        [162,   2561],
-                                        [3969,  2467]
-                                ]),
-
-                     np.float32([   [116,   654],
-                                        [3829,  647],
-                                        [109,   2567],
-                                        [3929,  2474]
-                                ]),
-
-                     np.float32([   [256,   927],
-                                        [3582,  507],
-                                        [469,   2754],
-                                        [3889,  2281]
-                                ]),
-
-                     np.float32([   [89,   594],
-                                        [3202,  527],
-                                        [109,   2407],
-                                        [3289,  2334]
-                                ]),
-
-                     np.float32([   [309,   674],
-                                        [1762,  654],
-                                        [282,   2547],
-                                        [1776,  2534]
-                                ])
-
-                     ]
-        #for i in range(0, len(frames)-1):  # len(frames)):
-            #plot_image(frames[i])
-            # aqui a função de alinhamento da imagem
-            #frames[i] = alinhamento( frames[i], pontos_inicio[i] )
-            #plot_image(frames[i])
+            np.float32([[371, 628], [4021, 728], [338, 2556], [4020, 2562]]),
+            np.float32([[16, 774], [3996, 781], [36, 2487], [4002, 2487]]),
+            np.float32([[222, 594], [3962, 874], [236, 2174], [3882, 2454]]),
+            np.float32([[296, 827], [3802, 734], [316, 2654], [3956, 2627]]),
+            np.float32([[149, 747], [3856, 701], [162, 2561], [3969, 2467]]),
+            np.float32([[116, 654], [3829, 647], [109, 2567], [3929, 2474]]),
+            np.float32([[256, 927], [3582, 507], [469, 2754], [3889, 2281]]),
+            np.float32([[89, 594], [3202, 527], [109, 2407], [3289, 2334]]),
+            np.float32([[309, 674], [1762, 654], [282, 2547], [1776, 2534]]),
+        ]
+        # for i in range(0, len(frames)-1):  # len(frames)):
+        # plot_image(frames[i])
+        # aqui a função de alinhamento da imagem
+        # frames[i] = alinhamento( frames[i], pontos_inicio[i] )
+        # plot_image(frames[i])
 
     return frames
 
 
 frames = treat_input("/home/atosarruda/Documentos/IC - Erikson/DocAI/stitching/db/1")
 # frames = treat_input("video-02.mp4")
-idx_base = len(frames) - 1 #pivo
-idx_sec = math.floor(len(frames) / 2) #alvo
+idx_base = len(frames) - 1  # pivo
+idx_sec = math.floor(len(frames) / 2)  # alvo
 
 """# Pré-processamento das imagens
 * resize para menor com a intenção de minimizar efeitos de ruidos
 """
 
+
 # Resize with Area algorithm
-def resize(img, to_width = 1900):
+def resize(img, to_width=1900):
     # initialize the dimensions of the image to be resized and grab the image size
     (h, w) = img.shape[:2]
-    print('Original Dimensions: ',img.shape)
+    print("Original Dimensions: ", img.shape)
     ratio = to_width / float(w)
     new_dimensions = (int(to_width), int(h * ratio))
-    resized = cv.resize(img, new_dimensions, interpolation = cv.INTER_AREA)
-    print('Resized Dimensions: ', resized.shape)
-    #resized = cv.cvtColor(resized, cv.COLOR_BGR2GRAY)
+    resized = cv.resize(img, new_dimensions, interpolation=cv.INTER_AREA)
+    print("Resized Dimensions: ", resized.shape)
+    # resized = cv.cvtColor(resized, cv.COLOR_BGR2GRAY)
     return resized
+
 
 def sharpening(img):
     # Criar um kernel de nitidez
-    kernel = np.array([[0,  -1,  0],
-                       [-1,  5, -1],
-                       [0,  -1,  0]])
+    kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
 
     # Aplicar o filtro de nitidez
     sharpened = cv.filter2D(img, -1, kernel)
@@ -237,18 +199,18 @@ def contraste(img):
     # Converter a imagem de volta de LAB para BGR
     imagem_clahe_rgb = cv.cvtColor(imagem_lab_clahe, cv.COLOR_LAB2BGR)
 
-    #plot_images( [img, imagem_clahe_rgb] )
+    # plot_images( [img, imagem_clahe_rgb] )
     return imagem_clahe_rgb
-
 
 
 # frames = [ sharpening(img)  for img in frames ]
 # frames = [ contraste(img)   for img in frames ]
-frames = [ resize(img)      for img in frames ]
+frames = [resize(img) for img in frames]
 
 """# Encontrar características
 Encontra características usando SIFT
 """
+
 
 def find_doc_mask(img):
     gray = img.copy()
@@ -262,46 +224,64 @@ def find_doc_mask(img):
     mask = cv.threshold(gray, threshold, 255, cv.THRESH_BINARY)[1]
     return mask
 
+
 # Gerada por IA
 
-def create_roi_mask(image_shape, side='left', ratio=0.5):
-    h, w = image_shape[:2]
-    mask = np.zeros((h, w), dtype=np.uint8) # Cria uma imagem preta
-    pixel_width = int(w * ratio) # Define a largura da busca baseada na porcentagem
 
-    if side == 'left':
+def create_roi_mask(image_shape, side="left", ratio=0.5):
+    h, w = image_shape[:2]
+    mask = np.zeros((h, w), dtype=np.uint8)  # Cria uma imagem preta
+    pixel_width = int(w * ratio)  # Define a largura da busca baseada na porcentagem
+
+    if side == "left":
         # Pinta de branco apenas o lado esquerdo
         mask[:, :pixel_width] = 255
 
-    elif side == 'right':
+    elif side == "right":
         # Pinta de branco apenas o lado direito
-        mask[:, w - pixel_width:] = 255
+        mask[:, w - pixel_width :] = 255
     return mask
 
+
 def draw_matches(matches, base_image, sec_image, base_image_kp, sec_image_kp):
-    draw_params = dict(matchColor = red_color, singlePointColor = None, flags = 2)
-    match = cv.drawMatches(base_image, base_image_kp, sec_image, sec_image_kp, matches, None, **draw_params)
+    draw_params = dict(matchColor=red_color, singlePointColor=None, flags=2)
+    match = cv.drawMatches(
+        base_image, base_image_kp, sec_image, sec_image_kp, matches, None, **draw_params
+    )
     plot_image(match)
+
 
 def get_featured_image(img, kp):
     tmp = img.copy()
-    img = cv.drawKeypoints(img, kp, tmp, color=red_color, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    img = cv.drawKeypoints(
+        img, kp, tmp, color=red_color, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS
+    )
     return img
 
-def find_matches(base_image, sec_image, threshold, debug_draw, min_matches = 10):
+
+def find_matches(base_image, sec_image, threshold, debug_draw, min_matches=10):
     sift = cv.SIFT_create()
 
     sec_image_mask = find_doc_mask(sec_image)
-    base_image_mask=find_doc_mask(base_image)
+    base_image_mask = find_doc_mask(base_image)
 
     base_image_kp, base_image_des = sift.detectAndCompute(base_image, base_image_mask)
     sec_image_kp, sec_image_des = sift.detectAndCompute(sec_image, sec_image_mask)
 
     if debug_draw:
-        plot_images([get_featured_image(base_image, kp=base_image_kp), get_featured_image(sec_image, kp=sec_image_kp)])
+        plot_images(
+            [
+                get_featured_image(base_image, kp=base_image_kp),
+                get_featured_image(sec_image, kp=sec_image_kp),
+            ]
+        )
 
-    brute_force_matcher = cv.BFMatcher()    #  match images can be used either FLANN or BFMatcher methods that OpenCV provides - https://docs.opencv.org/3.1.0/dc/dc3/tutorial_py_matcher.html
-    all_matches = brute_force_matcher.knnMatch(base_image_des, sec_image_des, k=2)  # k=2 return the two best matches for every descriptor
+    brute_force_matcher = (
+        cv.BFMatcher()
+    )  #  match images can be used either FLANN or BFMatcher methods that OpenCV provides - https://docs.opencv.org/3.1.0/dc/dc3/tutorial_py_matcher.html
+    all_matches = brute_force_matcher.knnMatch(
+        base_image_des, sec_image_des, k=2
+    )  # k=2 return the two best matches for every descriptor
 
     # filter all matches found to get the best ones
     good_matches = []
@@ -311,40 +291,53 @@ def find_matches(base_image, sec_image, threshold, debug_draw, min_matches = 10)
 
     if len(good_matches) >= min_matches:
         if debug_draw:
-            draw_matches(good_matches, base_image, sec_image, base_image_kp, sec_image_kp)
+            draw_matches(
+                good_matches, base_image, sec_image, base_image_kp, sec_image_kp
+            )
         return (good_matches, base_image_kp, sec_image_kp)
     else:
         print("Not enough matches are found - %d/%d" % (len(good_matches), min_matches))
         return (None, None, None)
 
-while(1):
-    matches, base_image_kp, sec_image_kp = find_matches(frames[idx_base], frames[idx_sec], threshold=0.7, debug_draw=True, min_matches=250)
-    if(matches != None):
+
+while 1:
+    matches, base_image_kp, sec_image_kp = find_matches(
+        frames[idx_base],
+        frames[idx_sec],
+        threshold=0.7,
+        debug_draw=True,
+        min_matches=250,
+    )
+    if matches != None:
         break
     else:
-        idx_sec+=1
-#del frames[idx_sec:]
-#idx_base = len(frames) - 1  # pivo
-#idx_sec = math.floor(len(frames) / 2)  # alvo
+        idx_sec += 1
+
+# del frames[idx_sec:]
+# idx_base = len(frames) - 1  # pivo
+# idx_sec = math.floor(len(frames) / 2)  # alvo
 
 """# Encontrando a homografia
 A Homografia é uma operação matricial que modifica pontos de um plano, levando-os a outro plano
 """
 
+
 def find_homography(kp1, kp2, matches):
-    src_pts = np.float32([ kp1[m.queryIdx].pt for m in matches ]).reshape(-1,1,2)
-    dst_pts = np.float32([ kp2[m.trainIdx].pt for m in matches ]).reshape(-1,1,2)
-    (H, _)  = cv.findHomography(dst_pts, src_pts, cv.RANSAC, ransacReprojThreshold=50)
+    src_pts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
+    dst_pts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+    (H, _) = cv.findHomography(dst_pts, src_pts, cv.RANSAC, ransacReprojThreshold=50)
     return H
 
+
 H = find_homography(base_image_kp, sec_image_kp, matches)
-#print(H)
+# print(H)
 
 """# Aplica e ajusta a homografia
 A homografia é aplicada à segunda imagem para que possa ser colada na imagem base.
 Além disso, o tamanho da imagem destino é ajustado para que os pixels que caem em coordenadas fora dos limites da imagem base, sejam considerados corretamente.
 No final, a homografia encontrada é ajustada considerando as translações consequentes do ajuste de tamanho na imagem destino.
 """
+
 
 def new_frame_size_and_matrix(homography, sec_image_shape, base_image_shape):
     # Reading the size of the image
@@ -353,9 +346,9 @@ def new_frame_size_and_matrix(homography, sec_image_shape, base_image_shape):
     # Taking the matrix of initial coordinates of the corners of the secondary image
     # Stored in the following format: [[x1, x2, x3, x4], [y1, y2, y3, y4], [1, 1, 1, 1]]
     # Where (xi, yi) is the coordinate of the i th corner of the image.
-    initial_matrix = np.array([ [0, width - 1,  width - 1,  0           ],
-                                [0, 0,          height - 1, height - 1  ],
-                                [1, 1,          1,          1           ]])
+    initial_matrix = np.array(
+        [[0, width - 1, width - 1, 0], [0, 0, height - 1, height - 1], [1, 1, 1, 1]]
+    )
 
     # Finding the final coordinates of the corners of the image after transformation.
     # NOTE: Here, the coordinates of the corners of the frame may go out of the
@@ -392,22 +385,23 @@ def new_frame_size_and_matrix(homography, sec_image_shape, base_image_shape):
     # Finding the coordinates of the corners of the image if they all were within the frame.
     x = np.add(x, correction[0])
     y = np.add(y, correction[1])
-    old_initial_points = np.float32([[0, 0],
-                                    [width - 1, 0],
-                                    [width - 1, height - 1],
-                                    [0, height - 1]])
+    old_initial_points = np.float32(
+        [[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]]
+    )
     new_final_ponts = np.float32(np.array([x, y]).transpose())
 
     # Updating the homography matrix. Done so that now the secondary image completely
     # lies inside the frame
     new_homography = cv.getPerspectiveTransform(old_initial_points, new_final_ponts)
 
-    #print(new_homography)
+    # print(new_homography)
     return [new_height, new_width], correction, new_homography
+
 
 """# Aplica a nova homografia
 Aplica a homografia ajustada para depois colar as imagens em um mosaico resultante
 """
+
 
 # Função para criar uma máscara gaussiana
 def gaussian_mask(shape, sigma=500):
@@ -415,10 +409,11 @@ def gaussian_mask(shape, sigma=500):
     h, w = shape[:2]
 
     # Coordenadas centradas
-    y, x = np.meshgrid(np.arange(h) - h // 2, np.arange(w) - w // 2, indexing='ij')
+    y, x = np.meshgrid(np.arange(h) - h // 2, np.arange(w) - w // 2, indexing="ij")
 
     mask = np.exp(-(x**2 + y**2) / (2 * sigma**2))
     return mask / mask.max()  # Normaliza para [0, 1]
+
 
 def cola_imagens(base_image, mask_base, stitched_image, mask_sec):
 
@@ -430,47 +425,91 @@ def cola_imagens(base_image, mask_base, stitched_image, mask_sec):
     mask2 = mask2[:, :, np.newaxis]
 
     # Ajustar as máscaras para que a soma seja igual a 1
-    mask2 = (1-mask1 + mask2)/2
+    mask2 = (1 - mask1 + mask2) / 2
     mask1 = 1 - mask2
 
-    mask1 = np.where( mask_sec[:,:,np.newaxis] == 0, 1, mask1)
-    mask2 = np.where(mask_base[:,:,np.newaxis] == 0, 1, mask2)
+    mask1 = np.where(mask_sec[:, :, np.newaxis] == 0, 1, mask1)
+    mask2 = np.where(mask_base[:, :, np.newaxis] == 0, 1, mask2)
 
     resultado = (base_image * mask1 + stitched_image * mask2).astype(np.uint8)
 
     return resultado
 
+
 def stitchImages(base_image, sec_image, homography, mask_base, mask_sec):
     # Finding size of new frame of stitched images and updating the homography matrix
-    new_frame_size, correction, homographyMatrix = new_frame_size_and_matrix(homography, sec_image_shape=sec_image.shape[:2], base_image_shape=base_image.shape[:2])
+    new_frame_size, correction, homographyMatrix = new_frame_size_and_matrix(
+        homography,
+        sec_image_shape=sec_image.shape[:2],
+        base_image_shape=base_image.shape[:2],
+    )
 
     # Finally placing the images upon one another.
-    stitched_image = cv.warpPerspective(sec_image, homographyMatrix, (new_frame_size[1], new_frame_size[0]))
-    mask_sec = cv.warpPerspective(mask_sec, homographyMatrix, (new_frame_size[1], new_frame_size[0]))
+    stitched_image = cv.warpPerspective(
+        sec_image, homographyMatrix, (new_frame_size[1], new_frame_size[0])
+    )
+    mask_sec = cv.warpPerspective(
+        mask_sec, homographyMatrix, (new_frame_size[1], new_frame_size[0])
+    )
 
-    st_img_1 = stitched_image.copy() # cola primeira na segunda
-    st_img_2 = stitched_image.copy() # cola segunda na primeira
-    st_img_3 = stitched_image.copy() # cola primeira e segunda usando máscaras gaussianas
+    st_img_1 = stitched_image.copy()  # cola primeira na segunda
+    st_img_2 = stitched_image.copy()  # cola segunda na primeira
+    st_img_3 = (
+        stitched_image.copy()
+    )  # cola primeira e segunda usando máscaras gaussianas
 
-    st_img_2[correction[1]:correction[1]+base_image.shape[0], correction[0]:correction[0]+base_image.shape[1]] = np.where(
-    stitched_image[correction[1]:correction[1]+base_image.shape[0], correction[0]:correction[0]+base_image.shape[1]] != 0, stitched_image[correction[1]:correction[1]+base_image.shape[0], correction[0]:correction[0]+base_image.shape[1]], base_image)
+    st_img_2[
+        correction[1] : correction[1] + base_image.shape[0],
+        correction[0] : correction[0] + base_image.shape[1],
+    ] = np.where(
+        stitched_image[
+            correction[1] : correction[1] + base_image.shape[0],
+            correction[0] : correction[0] + base_image.shape[1],
+        ]
+        != 0,
+        stitched_image[
+            correction[1] : correction[1] + base_image.shape[0],
+            correction[0] : correction[0] + base_image.shape[1],
+        ],
+        base_image,
+    )
 
-    st_img_1[correction[1]:correction[1]+base_image.shape[0], correction[0]:correction[0]+base_image.shape[1]] = np.where(
-    base_image != 0, base_image, stitched_image[correction[1]:correction[1]+base_image.shape[0], correction[0]:correction[0]+base_image.shape[1]] )
+    st_img_1[
+        correction[1] : correction[1] + base_image.shape[0],
+        correction[0] : correction[0] + base_image.shape[1],
+    ] = np.where(
+        base_image != 0,
+        base_image,
+        stitched_image[
+            correction[1] : correction[1] + base_image.shape[0],
+            correction[0] : correction[0] + base_image.shape[1],
+        ],
+    )
 
     nova_base = np.zeros(stitched_image.shape, dtype=np.uint8)
-    nova_base[correction[1]:correction[1]+base_image.shape[0], correction[0]:correction[0]+base_image.shape[1]] = base_image
+    nova_base[
+        correction[1] : correction[1] + base_image.shape[0],
+        correction[0] : correction[0] + base_image.shape[1],
+    ] = base_image
     # criar uma nova_base_mask
     nova_base_mask = np.zeros(nova_base.shape[:2], dtype=np.float64)
-    nova_base_mask[correction[1]:correction[1]+mask_base.shape[0], correction[0]:correction[0]+mask_base.shape[1]] = mask_base
+    nova_base_mask[
+        correction[1] : correction[1] + mask_base.shape[0],
+        correction[0] : correction[0] + mask_base.shape[1],
+    ] = mask_base
     st_img_3 = cola_imagens(nova_base, nova_base_mask, stitched_image, mask_sec)
-
 
     return st_img_2, stitched_image, mask_sec
 
 
 result_file_name = "mosaico.jpg"
-mosaico, _, _ = stitchImages(base_image=frames[idx_base], sec_image=frames[idx_sec], homography = H, mask_base=gaussian_mask(frames[idx_base].shape), mask_sec=gaussian_mask(frames[idx_sec].shape))
+mosaico, _, _ = stitchImages(
+    base_image=frames[idx_base],
+    sec_image=frames[idx_sec],
+    homography=H,
+    mask_base=gaussian_mask(frames[idx_base].shape),
+    mask_sec=gaussian_mask(frames[idx_sec].shape),
+)
 print("mosaico")
 plot_image(mosaico)
 cv.imwrite(result_file_name, mosaico)
@@ -500,12 +539,12 @@ O resultado é devolvido com a composição das duas
 # ok 15. o ajuste pode ser: mask2 = (1-mask1 + mask2)/2 e mask1 = 1 - mask2
 
 # [ x, x, Alvo, x , Pivo] Vamos tentar colar imagens distantes
-img1 = mosaico #Pivo
+img1 = mosaico  # Pivo
 mask_img1 = gaussian_mask(img1.shape)
 alvo = math.floor(len(frames) / 2)
 
 
-while(1):
+while 1:
     print(len(frames))
     print(alvo)
     img2 = frames[alvo]
@@ -513,21 +552,27 @@ while(1):
     matches, base_image_kp, sec_image_kp = find_matches(
         img1, img2, 0.75, debug_draw=True, min_matches=150
     )
-    if(matches == None):
+    if matches == None:
 
-        alvo +=1 #Volte uma imagem
+        alvo += 1  # Volte uma imagem
         print("Somando")
         print(len(frames))
         print(alvo)
-        if ((len(frames)-1) == alvo): #Alvo == Pivo
+        if (len(frames) - 1) == alvo:  # Alvo == Pivo
             print("Finalizando")
             break
         else:
-            continue #Volte ao início do loop
+            continue  # Volte ao início do loop
 
     H = find_homography(base_image_kp, sec_image_kp, matches)
     mask_img2 = gaussian_mask(img2.shape)
-    mosaico, img1, mask_img1 = stitchImages(base_image=mosaico, sec_image=img2, homography = H, mask_base=mask_img1, mask_sec=mask_img2)
+    mosaico, img1, mask_img1 = stitchImages(
+        base_image=mosaico,
+        sec_image=img2,
+        homography=H,
+        mask_base=mask_img1,
+        mask_sec=mask_img2,
+    )
     plot_image(mosaico)
     cv.imwrite(result_file_name, mosaico)
 

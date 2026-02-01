@@ -275,10 +275,13 @@ def create_json():
         nota_fiscal.total_itens = len(nota_fiscal.itens)    # Atualiza o total de itens
         current_item = None                                 # Reseta o item atual 
         
-    # 🔑 recalcula total com base nos itens
-    nota_fiscal.total_itens = len(nota_fiscal.itens)
-    nota_fiscal.valor_total = sum(item.preco_total for item in nota_fiscal.itens)                               # Soma os preços totais dos itens
-    nota_fiscal.valor_total_pago = nota_fiscal.valor_total - sum(item.desconto for item in nota_fiscal.itens)   # Subtrai os descontos dos itens do valor total
+    valor_total_itens = sum(item.preco_total for item in nota_fiscal.itens)
+    total_descontos = sum(item.desconto for item in nota_fiscal.itens)
+
+    # 🔑 recalcula total com base nos itens    
+    nota_fiscal.valor_total = round(valor_total_itens,2)                          # Soma os preços totais dos itens
+    nota_fiscal.valor_total_pago = round(valor_total_itens - total_descontos,2)   # Subtrai os descontos dos itens do valor total
+    nota_fiscal.valor_total_desconto = round(total_descontos,2)
 
     result = nota_fiscal.to_dict()                          # Converte para dicionário
     return json.dumps(result, ensure_ascii=False, indent=2) # Converte para JSON string

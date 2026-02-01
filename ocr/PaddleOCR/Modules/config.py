@@ -8,8 +8,10 @@ Dividido em:
 '''
 
 import platform, re
+import numpy as np
 from PIL import ImageFont
 from paddleocr import PaddleOCR
+from sklearn.cluster import DBSCAN
 
 # === Detectar o sistema operacional para definir o caminho da fonte a ser utilizada ===
 system = platform.system()
@@ -93,35 +95,104 @@ def parse_ocr_txt(txt_file): #
                     "y2": y1
                 })
 
-    return tokens                                 # Retorna os tokens do arquivo txt  
+    return tokens
 
 
-def reorder_tokens(tokens, line_threshold=5):
+def reorder_tokens(tokens, verbose=False):
     """
-    Ordena palavras por coordenadas:
-    1. Ordena por y (vertical)
-    2. Dentro da linha, ordena por x (horizontal)
-    3. Agrupa por linhas usando tolerância
+    Ordena tokens em linhas usando clustering DBSCAN OTIMIZADO - 100% AUTOMÁTICO
+    
+    Estratégia: usa altura mínima dos tokens como referência para evitar
+    juntar linhas distintas que estão próximas verticalmente.
+    
+    Args:
+        tokens: Lista de dicionários com text, score, x, y, x2, y2
+        verbose: Se True, imprime informações de debug
+    
+    Returns:
+        Lista de linhas, onde cada linha é uma lista de tokens ordenados por x
     """
-    tokens = sorted(tokens, key=lambda t: (t["y"], t["x"]))     # Ordena tokens baseado em y e x
-
+    if not tokens:
+        return []
+    
+    # === PASSO 1: Calcular parâmetros adaptativos ===
+    alturas = [abs(t["y2"] - t["y"]) for t in tokens]
+    altura_min = np.min(alturas)
+    altura_media = np.mean(alturas)
+    altura_max = np.max(alturas)
+    
+    # Estratégia conservadora: usa altura mínima como base
+    # Isso evita juntar linhas próximas mas distintas
+    eps = altura_min * 0.8  # 80% da menor altura
+    
+    if verbose:
+        print(f"[Clustering] Altura mínima: {altura_min:.2f}px")
+        print(f"[Clustering] Altura média: {altura_media:.2f}px")
+        print(f"[Clustering] Altura máxima: {altura_max:.2f}px")
+        print(f"[Clustering] Eps calculado: {eps:.2f}px (conservador)")
+    
+    # === PASSO 2: Clustering nas coordenadas Y (vertical) ===
+    y_coords = np.array([[t["y"]] for t in tokens])
+    
+    # DBSCAN com parâmetro conservador
+    clustering = DBSCAN(eps=eps, min_samples=1, metric='euclidean').fit(y_coords)
+    
+    if verbose:
+        n_clusters = len(set(clustering.labels_)) - (1 if -1 in clustering.labels_ else 0)
+        print(f"[Clustering] {n_clusters} linhas detectadas")
+    
+    # === PASSO 3: Agrupar tokens por cluster (linha) ===
+    linhas_dict = {}
+    for idx, label in enumerate(clustering.labels_):
+        if label not in linhas_dict:
+            linhas_dict[label] = []
+        linhas_dict[label].append(tokens[idx])
+    
+    # === PASSO 4: Ordenar linhas de cima para baixo ===
     linhas = []
-    linha_atual = []
-    last_y = None
-
-    for token in tokens:                                        # Percorre todos os tokens 
-        if last_y is None or abs(token["y"] - last_y) <= line_threshold: # Se a diferença do y atual com o último for menor que o valor do threshold
-            linha_atual.append(token)  # adiciona o token na linha atual
-        else:
-            linhas.append(linha_atual) # aduciona a linha atual na lista de linhas   
-            linha_atual = [token]      # inicia uma nova linha atual com o token atual
-        last_y = token["y"]            # Atualiza o last_y com o y do token atual
-
-    if linha_atual:                    # Após o loop, se houver tokens na linha atual   
-        linhas.append(linha_atual)     # adiciona a linha atual na lista de linhas 
-
-    # Ordena dentro das linhas por X
-    for linha in linhas:
+    for label in sorted(linhas_dict.keys(), key=lambda k: min(t["y"] for t in linhas_dict[k])):
+        linha = linhas_dict[label]
+        # Ordena tokens dentro da linha por X (esquerda para direita)
         linha.sort(key=lambda t: t["x"])
-
-    return linhas                      # Retorna as linhas ordenadas baseado no threshold definido
+        linhas.append(linha)
+    
+    # === PASSO 5: Pós-processamento inteligente ===
+    # Mescla APENAS se os tokens estiverem alinhados horizontalmente
+    if len(linhas) > 1:
+        linhas_merged = [linhas[0]]
+        
+        for i in range(1, len(linhas)):
+            linha_prev = linhas_merged[-1]
+            linha_curr = linhas[i]
+            
+            # Calcula Y médio de cada linha
+            y_prev = np.mean([t["y"] for t in linha_prev])
+            y_curr = np.mean([t["y"] for t in linha_curr])
+            
+            # Calcula sobreposição horizontal (X)
+            x_prev_min = min(t["x"] for t in linha_prev)
+            x_prev_max = max(t["x2"] for t in linha_prev)
+            x_curr_min = min(t["x"] for t in linha_curr)
+            x_curr_max = max(t["x2"] for t in linha_curr)
+            
+            # Há sobreposição horizontal?
+            overlap = not (x_prev_max < x_curr_min or x_curr_max < x_prev_min)
+            
+            # Mescla APENAS se:
+            # 1. Linhas estão muito próximas (< altura mínima)
+            # 2. NÃO há sobreposição horizontal (estão lado a lado)
+            if abs(y_curr - y_prev) < altura_min and not overlap:
+                linhas_merged[-1].extend(linha_curr)
+                linhas_merged[-1].sort(key=lambda t: t["x"])
+            else:
+                linhas_merged.append(linha_curr)
+        
+        linhas = linhas_merged
+    
+    if verbose:
+        print(f"[Clustering] {len(linhas)} linhas finais")
+        for i, linha in enumerate(linhas):
+            textos = [t["text"] for t in linha]
+            print(f"  Linha {i+1}: {' '.join(textos)}")
+    
+    return linhas

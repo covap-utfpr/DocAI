@@ -37,6 +37,7 @@ all:
 	make run_perspectiva
 	make run_mosaico_cs
 	make run_trata
+	make run_ocr
 
 
 run_perspectiva:
@@ -54,4 +55,4 @@ run_trata:
 
 run_ocr:
 
-	
+	bash ocr/Run_OCR.sh $(PASTA_SAIDA_TRATA)

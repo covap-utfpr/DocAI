@@ -9,8 +9,11 @@ from tkinter import messagebox
 # CONFIGURAÇÕES
 # ==========================================
 
-PASTA_ENTRADA = r"D:\img\SEM FUNDO"
-PASTA_SAIDA = r"D:\img\TRATA"
+PASTA_ENTRADA = os.getenv("PASTA_ENTRADA_PERSPECTIVA", r"D:\img\SEM FUNDO")
+PASTA_SAIDA = os.getenv("PASTA_SAIDA_PERSPECTIVA", r"D:\img\TRATA")
+print(PASTA_ENTRADA)
+print(PASTA_SAIDA)
+print("Ok!")
 
 os.makedirs(PASTA_SAIDA, exist_ok=True)
 
@@ -170,7 +173,7 @@ def main():
         resultado = executar_scanner(img_resized)
 
         if resultado is not None:
-            nome_saida = os.path.splitext(nome)[0] + "_perspectiva.png"
+            nome_saida = os.path.splitext(nome)[0] + "_perspectiva.jpg" #  ALTEREI DE PNG PARA JPG
             cv2.imwrite(os.path.join(PASTA_SAIDA, nome_saida), resultado)
 
     messagebox.showinfo("Concluído", "Processamento finalizado.")

@@ -8,6 +8,9 @@ from tkinter import filedialog, messagebox
 
 EXTENSOES = (".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp")
 
+PASTA_ENTRADA = os.getenv("PASTA_ENTRADA_TRATA", r"D:\img\SEM FUNDO")
+PASTA_SAIDA = os.getenv("PASTA_SAIDA_TRATA", r"D:\img\TRATA")
+
 # ==================================================
 # FUNÇÕES AUXILIARES – PERSPECTIVA (IGUAL AO SEU)
 # ==================================================
@@ -78,11 +81,11 @@ def main():
     root = tk.Tk()
     root.withdraw()
 
-    pasta_entrada = filedialog.askdirectory(title="Selecione a PASTA DE ENTRADA")
+    pasta_entrada = PASTA_ENTRADA#filedialog.askdirectory(title="Selecione a PASTA DE ENTRADA")
     if not pasta_entrada:
         return
 
-    pasta_saida = filedialog.askdirectory(title="Selecione a PASTA DE SAÍDA")
+    pasta_saida = PASTA_SAIDA#filedialog.askdirectory(title="Selecione a PASTA DE SAÍDA")
     if not pasta_saida:
         return
 

@@ -60,11 +60,47 @@ Caso a colagem seja bem sucessida volte ao caso 1. Caso não, volte ao caso 2.
 Caso o Alvo seja igual ao Pivô, encerre.
 
 ## Sequêncial Com Salto : SCS
-Explicação 
+SCS assume as mesmas premissas que ERCS, porem inicia a colagem do primeiro elemento do vetor de imagens. Assim garante que a primeira imagem seja mantida no resultado final.
+
+A seleção de imagens a serem comparadas ocorre através de um alvo e um Pivô:
+
+- #### Pivô 
+  É a primeira imagem do vetor.
+- #### Alvo
+  É a imagem na posição do meio do vetor.
+  
+<img width="720" height="680" alt="ERCS X Padrão X SCS (2)" src="https://github.com/user-attachments/assets/78c9b9d0-8823-405f-a2a7-5c5ad8926e8b" />
+### Caso 1 ( Comparação bem sucedida  )
+Nesse caso avaliamos como o aloritmo se porta após conseguir fazer a colagem das duas imagens. 
+1) É gerada uma nova imagem chamada de **mosaico** contendo a colagem da imagem Alvo e Pivô.
+2) As imagens do entre o Alvo até o Pivô são dercaradas.
+3) A imagem Alvo se torna o novo Pivô.
+4) A imagem na pocisão do meio desse novo vetor se torna o novo Alvo.
+
+___observação: no caso do vetor  ter um tamanho par, deve-se tentar alcançar a posição mais distante do vetor, com a função teto da divisão___
+
+Os passos acima se repetem sempre que houver uma comparação bem sucedida. E se encerra caso o Alvo e o Pivô sejam a mesma imagem.
+
+### Caso 2 ( Comparação mal sucedida )
+Nesse caso avaliamos como o algoritmo se porta após falhar em fazer a colagem das duas imagens.
+1) Torna a imagem seguinte a do Alvo como novo Alvo.
+2) Compara o novo Alvo com o Pivô.
+
+Caso a colagem seja bem sucessida volte ao caso 1. Caso não, volte ao caso 2.
+Caso o Alvo seja igual ao Pivô, encerre.
 ## Em Ré Com Salto Fixo : ERCSF
-Explicação 
+ERCSF altera o modo de escolher o alvo. No ERCS o alvo é escolhido através de uma divisão, tendo como parâmetro o tamanho do vetor. Para ERCSF o vetor alvo ocorre de modo fixo de acordo com um valor pré-determinado.
+
+Básicamente, ele seleciona uma posição do vetor a partir do pivô com um valor fixo determinado. 
+
+<img width="720" height="680" alt="ERCS X Padrão X SCS (4)" src="https://github.com/user-attachments/assets/e4177aa3-905c-45bd-a726-9642d7169ecc" />
+
 # Sequêncial com Salto Fixo : SCSF
-Explicação 
+SCSF altera o modo de escolher o alvo. No SCS o alvo é escolhido através de uma divisão, tendo como parâmetro o tamanho do vetor. Para ERCSF o vetor alvo ocorre de modo fixo de acordo com um valor pré-determinado.
+
+Básicamente, ele seleciona uma posição do vetor a partir do pivô com um valor fixo determinado. 
+
+<img width="720" height="680" alt="ERCS X Padrão X SCS (3)" src="https://github.com/user-attachments/assets/bde97396-81d8-43e5-a819-a24707b2588f" />
 
 ## Desempenho
 

@@ -8,11 +8,12 @@ EXEC=python3.13
 #Dir/exec
 PERSPECTIVA=scan/perspectiva.py 
 TRATA=scan/trata.py 
-MOSAICO = stitching/mosaico_cs.py
+MOSAICO =stitching/mosaico_cs.py
+INPUT=input
 
 
 #CONFUGARAÇÕES PERSPECTIVA.PY
-export PASTA_ENTRADA_PERSPECTIVA=input/perspectiva_input
+export PASTA_ENTRADA_PERSPECTIVA=$(INPUT)
 export PASTA_SAIDA_PERSPECTIVA=/home/atosarruda/Documentos/IC - Erikson/DocAI/allofthem/output/perspectiva_output
 
 #CONFIGURAÇÕES MOSAICO_CS.PY
@@ -28,17 +29,15 @@ export PASTA_SAIDA_TRATA=output/trata_output
 
 
 all: 
-	
+
 	make run_perspectiva
 	make run_mosaico_cs
 	make run_trata
 	make run_ocr
 
-
 run_perspectiva:
 
 	$(EXEC) $(PERSPECTIVA) 
-
 
 run_mosaico_cs:
 

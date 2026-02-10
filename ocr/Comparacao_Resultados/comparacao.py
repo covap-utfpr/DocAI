@@ -2,9 +2,10 @@ import os, sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
-from Modules.functions import extrair_tokens, granularidade, comparar_consumindo, calcular_metricas
+from Modules.functions import extrair_tokens, granularidade, comparar_consumindo, calcular_metricas, rotular_nome
 
 # ---------------------------------------------
 # MAIN
@@ -19,8 +20,8 @@ def main():                                                                     
     base_nome = os.path.splitext(os.path.basename(base_path))[0]                    # Nome da base sem extensão e caminho
     base = extrair_tokens(base_path)                                                # Extrai tokens da base (função)
     print(f"Base '{base_nome}' carregada: {len(base)} tokens\n")                    # Mensagem de status
-    cupons_paths = sys.argv[2:]                                                     # Caminhos dos arquivos de cupons a serem comparados      
-    nomes_cupons = [os.path.splitext(os.path.basename(p))[0] for p in cupons_paths] # Nomes dos cupons sem extensão e caminho
+    cupons_paths = sys.argv[2:]                                                     # Caminhos dos arquivos de cupons a serem comparados          
+    nomes_cupons = [rotular_nome(p) for p in cupons_paths]                          # Gerar rótulos para cupons baseado na extensão de arquivo
     df_resultado = pd.DataFrame({"ITEM_BASE": base})                                # DataFrame para resultados (booleanos) 
     df_conteudo = pd.DataFrame({"ITEM_BASE": base})                                 # DataFrame para conteúdos encontrados 
     metricas_total = {}                                                             # Dicionário para armazenar métricas totais por cupom
@@ -139,94 +140,207 @@ def main():                                                                     
         for idx, row in df_gran.iterrows():                                                                 # Para cada linha da matriz de granularidade 
             ws5.append([idx] + row.tolist())                                                                # Adiciona a linha na planilha
 
+        print("\n" + "="*70)
+        print("GERANDO VISUALIZAÇÕES MELHORADAS")
+        print("="*70)
+        
         # -----------------------------
-        # CRIAR FIGURA COM DOIS SUBPLOTS
+        # GRÁFICO 1: MATRIZ DE GRANULARIDADE
         # -----------------------------
-        fig = plt.figure(figsize=(max(len(nomes_cupons)*0.8, 10), max(len(nomes_cupons)*0.5 + 3, 10)))
+        fig1, ax1 = plt.subplots(figsize=(max(len(nomes_cupons)*1.2, 10), max(len(nomes_cupons)*1.0, 8)))
         
-        # Subplot 1: Matriz de Granularidade (parte superior)
-        ax1 = plt.subplot(2, 1, 1)
-        sns.heatmap(df_gran_sim, annot=True, fmt=".1f", cmap="YlGnBu", 
-                    cbar_kws={'label':'% Granularidade (simétrica)'}, ax=ax1)
-        ax1.set_title(f"Matriz de Granularidade - {base_nome}", fontsize=14, fontweight='bold')
-        ax1.set_xlabel("Comparado com")
-        ax1.set_ylabel("Base")
+        # Criar heatmap
+        sns.heatmap(df_gran_sim, annot=True, fmt=".1f", cmap="RdYlGn", 
+                    cbar_kws={'label':'Granularidade (%)'}, ax=ax1, 
+                    vmin=0, vmax=100, linewidths=0.5, linecolor='gray')
         
-        # Subplot 2: Acurácia em relação à base (parte inferior)
-        ax2 = plt.subplot(2, 1, 2)
+        ax1.set_title(f"Matriz de Granularidade Entre Modelos OCR", 
+                     fontsize=16, fontweight='bold', pad=20)
+        ax1.set_xlabel("Modelo Comparado", fontsize=12, fontweight='bold')
+        ax1.set_ylabel("Modelo Base", fontsize=12, fontweight='bold')
         
-        # Extrair acurácias de cada modelo
-        acuracias = [metricas_total[nome]["Acuracia"] * 100 for nome in nomes_cupons]
+        # Adicionar texto explicativo
+        explicacao = ("Granularidade: Percentual de tokens entre os modelos \n" +
+                     "Valores mais altos (verde) = maior similaridade | Valores mais baixos (vermelho) = menor similaridade")
+        fig1.text(0.5, 0.02, explicacao, ha='center', fontsize=10, 
+                 style='italic', wrap=True, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.3))
         
-        # Criar tabela com acurácias
-        tabela_data = [[f"{nome}", f"{acc:.1f}%"] for nome, acc in zip(nomes_cupons, acuracias)]
-        
-        # Criar cores baseadas na acurácia (verde para alto, vermelho para baixo)
-        cores_celulas = []
-        for acc in acuracias:
-            if acc >= 90:
-                cores_celulas.append(['#90EE90', '#90EE90'])  # Verde claro
-            elif acc >= 70:
-                cores_celulas.append(['#FFE066', '#FFE066'])  # Amarelo
-            else:
-                cores_celulas.append(['#FFB3B3', '#FFB3B3'])  # Vermelho claro
-        
-        # Criar a tabela
-        table = ax2.table(cellText=tabela_data, 
-                         colLabels=['Modelo', f'Acurácia vs {base_nome}'],
-                         cellLoc='center',
-                         loc='center',
-                         cellColours=cores_celulas,
-                         colWidths=[0.4, 0.3])
-        
-        table.auto_set_font_size(False)
-        table.set_fontsize(10)
-        table.scale(1, 2)
-        
-        # Estilizar cabeçalho
-        for i in range(2):
-            table[(0, i)].set_facecolor('#4472C4')
-            table[(0, i)].set_text_props(weight='bold', color='white')
-        
-        ax2.axis('off')
-        ax2.set_title(f"Desempenho dos Modelos", fontsize=12, fontweight='bold', pad=20)
-        
-        plt.tight_layout()
-        png_name = os.path.join(output_dir, f"granularidade_{base_nome}.png")
-        plt.savefig(png_name, dpi=150, bbox_inches='tight')
+        plt.tight_layout(rect=[0, 0.05, 1, 1])
+        png_granularidade = os.path.join(output_dir, f"01_matriz_granularidade_{base_nome}.png")
+        plt.savefig(png_granularidade, dpi=300, bbox_inches='tight')
         plt.close()
-        print(f"\nMatriz de granularidade com acurácias salva como PNG: {png_name}")
+        print(f"\n[1/4] Matriz de granularidade salva: {png_granularidade}")
+        
+        # -----------------------------
+        # GRÁFICO 2: ACURÁCIA DOS MODELOS
+        # -----------------------------
+        fig2, ax2 = plt.subplots(figsize=(max(len(nomes_cupons)*0.8, 10), 8))
+        
+        # Extrair métricas de cada modelo
+        modelos = []
+        acuracias = []
+        precisoes = []
+        recalls = []
+        f1s = []
+        
+        for nome in nomes_cupons:
+            modelos.append(nome)
+            acuracias.append(metricas_total[nome]["Acuracia"] * 100)
+            precisoes.append(metricas_total[nome]["Precisao"] * 100)
+            recalls.append(metricas_total[nome]["Recall"] * 100)
+            f1s.append(metricas_total[nome]["F1"] * 100)
+        
+        # Criar gráfico de barras agrupadas
+        x = range(len(modelos))
+        width = 0.2
+        
+        bars1 = ax2.bar([i - 1.5*width for i in x], acuracias, width, label='Acurácia', color='#2E86AB')
+        #bars2 = ax2.bar([i - 0.5*width for i in x], precisoes, width, label='Precisão', color='#A23B72')
+        #bars3 = ax2.bar([i + 0.5*width for i in x], recalls, width, label='Recall', color='#F18F01')
+        #bars4 = ax2.bar([i + 1.5*width for i in x], f1s, width, label='F1-Score', color='#C73E1D')
+        
+        # Adicionar valores nas barras
+        for bars in [bars1]:
+            for bar in bars:
+                height = bar.get_height()
+                ax2.text(bar.get_x() + bar.get_width()/2., height,
+                        f'{height:.1f}%', ha='center', va='bottom', fontsize=8)
+        
+        ax2.set_xlabel('Modelos OCR', fontsize=12, fontweight='bold')
+        ax2.set_ylabel('Percentual (%)', fontsize=12, fontweight='bold')
+        ax2.set_title(f'Desempenho dos Modelos OCR\nBase de Referência: {base_nome}', 
+                     fontsize=16, fontweight='bold', pad=20)
+        ax2.set_xticks(x)
+        ax2.set_xticklabels(modelos, rotation=45, ha='right')
+        ax2.legend(loc='upper left', fontsize=10)
+        ax2.set_ylim(0, 110)
+        ax2.grid(axis='y', linestyle='--', alpha=0.3)
+        
+        # Adicionar linha de referência em 100%
+        ax2.axhline(y=100, color='green', linestyle='--', linewidth=1, alpha=0.5, label='Ideal (100%)')
+        
+        # Adicionar explicação das métricas
+        explicacao_metricas = (
+            "Acurácia: % de itens corretamente identificados" # | Precisão: % de itens identificados que são corretos\n" +
+            #"Recall: % de itens corretos que foram identificados | F1-Score: média harmônica entre Precisão e Recall"
+        )
+        fig2.text(0.5, 0.02, explicacao_metricas, ha='center', fontsize=9, 
+                 style='italic', wrap=True, bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3))
+        
+        plt.tight_layout(rect=[0, 0.08, 1, 1])
+        png_acuracia = os.path.join(output_dir, f"02_metricas_desempenho_{base_nome}.png")
+        plt.savefig(png_acuracia, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"[2/4] Gráfico de métricas salvo: {png_acuracia}")
 
         # -----------------------------
-        # Gráfico longo de acertos/erros
+        # GRÁFICO 3: GRANULARIDADE BASE vs MODELOS (NOVO!)
+        # -----------------------------
+        fig3, ax3 = plt.subplots(figsize=(max(len(nomes_cupons)*0.8, 10), 8))
+        
+        # Calcular granularidade da base em relação a cada modelo
+        gran_base_para_modelos = []
+        gran_modelos_para_base = []
+        
+        for nome in nomes_cupons:
+            # Granularidade: quanto da BASE está presente no MODELO
+            gran_b_m = granularidade(base, cupons_tokens[nome])
+            gran_base_para_modelos.append(gran_b_m)
+            
+            # Granularidade: quanto do MODELO está presente na BASE
+            gran_m_b = granularidade(cupons_tokens[nome], base)
+            gran_modelos_para_base.append(gran_m_b)
+        
+        # Criar gráfico de barras agrupadas
+        x = range(len(modelos))
+        width = 0.35
+        
+        bars1 = ax3.bar([i - width/2 for i in x], gran_base_para_modelos, width, 
+                       label='Base → Modelo (Recall / Cobertura)', color='#4ECDC4')
+        bars2 = ax3.bar([i + width/2 for i in x], gran_modelos_para_base, width, 
+                       label='Modelo → Base (Pureza / Aderência)', color='#FF6B6B')
+        
+        # Adicionar valores nas barras
+        for bars in [bars1, bars2]:
+            for bar in bars:
+                height = bar.get_height()
+                ax3.text(bar.get_x() + bar.get_width()/2., height,
+                        f'{height:.1f}%', ha='center', va='bottom', fontsize=9, fontweight='bold')
+        
+        ax3.set_xlabel('Modelos OCR', fontsize=12, fontweight='bold')
+        ax3.set_ylabel('Granularidade (%)', fontsize=12, fontweight='bold')
+        ax3.set_title(f'Granularidade de Tokens: Base de Referência vs Modelos OCR\nBase de Referência: {base_nome}',
+                     fontsize=16, fontweight='bold', pad=20)
+        ax3.set_xticks(x)
+        ax3.set_xticklabels(modelos, rotation=45, ha='right')
+        ax3.legend(loc='upper left', fontsize=10)
+        ax3.set_ylim(0, 110)
+        ax3.grid(axis='y', linestyle='--', alpha=0.3)
+        
+        # Linha de referência em 100%
+        ax3.axhline(y=100, color='green', linestyle='--', linewidth=1, alpha=0.5, label='Ideal (100%)')
+        
+        # Explicação
+        explicacao_gran = (
+            #"Base → Modelo: % dos tokens da referência que foram capturados pelo modelo (cobertura)\n" +
+            #"Modelo → Base: % dos tokens do modelo que estão corretos segundo a referência (precisão)"
+            "Base → Modelo (Recall): porcentagem dos tokens da base de referência"
+            "que foram encontrados no modelo OCR (cobertura da informação).\n"
+            "Modelo → Base (Pureza): porcentagem dos tokens gerados pelo modelo OCR "
+            "que também existem na base de referência (aderência lexical)."
+        )
+        fig3.text(0.5, 0.02, explicacao_gran, ha='center', fontsize=9, 
+                 style='italic', wrap=True, bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.3))
+        
+        plt.tight_layout(rect=[0, 0.08, 1, 1])
+        png_gran_base = os.path.join(output_dir, f"03_granularidade_base_vs_modelos_{base_nome}.png")
+        plt.savefig(png_gran_base, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"[3/4] Gráfico de granularidade Base vs Modelos salvo: {png_gran_base}")
+
+        # -----------------------------
+        # Gráfico longo de acertos/erros (MANTIDO DO ORIGINAL)
         # -----------------------------
         itens_base = df_resultado["ITEM_BASE"].tolist()                             # Para o eixo X do gráfico
         x = range(len(itens_base))                                                  # Eixo X numérico com base no número de itens
-        plt.figure(figsize=(max(len(itens_base)*0.4, 8), 6))                        # Figura maior para muitos itens, ajustando largura baseado em número de itens, altura fixa 
-        offset = 0.03                                                               # distância entre linhas
-        for i, nome in enumerate(nomes_cupons):                                     # Para cada cupom analisado
-            y = df_resultado[nome].astype(int) + i*offset                           # Eixo Y com offset para visualização
-            plt.plot(x, y, marker='o', label=nome)                                  # Plota a linha com marcadores
+        plt.figure(figsize=(max(len(itens_base)*0.15, 10), max(len(nomes_cupons)*0.5, 6)))
+
+        # Preparar dados para heatmap
+        heatmap_data = df_resultado[nomes_cupons].T  # Transpor para cupons nas linhas
+
+        # Criar heatmap
+        sns.heatmap(heatmap_data, 
+                    annot=True, 
+                    fmt='d',
+                    cmap=['#ff6b6b', '#51cf66'],  # Vermelho para 0, Verde para 1
+                    cbar=False,
+                    linewidths=0.5,
+                    linecolor='gray')
+
+        plt.title(f"Acertos/Erros por Cupom e Item ({len(itens_base)} itens, {len(nomes_cupons)} cupons)")
+        plt.xlabel("Item Base")
+        plt.ylabel("Cupom")
+        plt.xticks(ticks=np.arange(len(itens_base)) + 0.5, 
+                   labels=itens_base, 
+                   rotation=90, 
+                   fontsize=6)
+        plt.yticks(rotation=0)
+
+        plt.tight_layout()
+        save_name = os.path.join(output_dir, f"04_heatmap_comparacao_{base_nome}.png")
+        plt.savefig(save_name, dpi=150)
+        plt.close()
+        print(f"[4/4] Gráfico de comparação salvo: {save_name}")                    # Mensagem de status
         
-        plt.xticks(x, itens_base, rotation=90)                                      # Mostra os nomes dos itens na horizontal
-        plt.xlabel("Item Base")                                                     # Rótulo do eixo X
-        plt.ylabel("Acerto (1) / Erro (0)")                                         # Rótulo do eixo Y
-        plt.title("Acertos e Erros por Cupom")                                      # Título do gráfico
-        plt.legend(loc='best')                                                      # Legenda no melhor local de maneira autoamtica
-        plt.tight_layout()                                                          # Ajuste automático do layoult
-        plt.grid(True, linestyle='--', alpha=0.5)                                   # Adiciona grade ao gráfico
-        plt.yticks([0, 1], ["Erro (0)", "Acerto (1)"])                              # Rótulos do eixo Y
-        plt.ylim(-0.1, 1 + len(nomes_cupons)*offset + 0.1)                          # Limites do eixo Y    
-        save_name = os.path.join(output_dir, f"grafico_comparacao_{base_nome}.png") # Nome do arquivo de saída a ser salvo
-        plt.savefig(save_name)                                                      # Salva o gráfico como imagm        
-        plt.close()                                                                 # Fecha a figura para liberar memória
-        print(f"Gráfico salvo: {save_name}")                                        # Mensagem de status
+        print("\n" + "="*70)
+        print("✓ Todas as visualizações foram geradas com sucesso!")
+        print("="*70)
     else:                                                                           # Se não há dados avisa
         print("AVISO: Não há dados suficientes para gerar o gráfico")               # Mensagem de aviso
                
     output_file = os.path.join(output_dir, f"comparacao_{base_nome}.xlsx")          # Salvar arquivo XLSX
     wb.save(output_file)                                                            # Salva o arquivo XLSX
-    print(f"\nArquivo gerado: {output_file}")                                       # Mensagem de status
+    print(f"\nArquivo Excel gerado: {output_file}")                                 # Mensagem de status
     
     if len(base) == 0:                                                                                                  # Verifica se a base está vazia
         print("\nAVISO: A base não contém tokens! Verifique o formato do arquivo.")                                     # Se estiver, avisa o usuário

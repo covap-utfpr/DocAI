@@ -1,3 +1,4 @@
+import os
 import re
 import json
 from collections import Counter
@@ -31,8 +32,9 @@ def extrair_json(path):
                     tokens_totais.extend(tokens)   
 
             # Processa a lista de itens
-            if "itens" in data and isinstance(data["itens"], list):
-                for item in data["itens"]:
+            lista_itens = data.get("itens") or data.get("item")
+            if isinstance(lista_itens, list):
+                for item in lista_itens:                        
                     # Extrai campos relevantes: código, descrição
                     if "codigo" in item and item["codigo"]:
                         tokens = normalizar_e_tokenizar(str(item["codigo"]))
@@ -152,3 +154,15 @@ def granularidade(tokens_a, tokens_b):                                          
     total = sum(count_a.values())                                                   # Total de tokens em A
     encontrados = sum(min(count_a[t], count_b.get(t,0)) for t in count_a)           # Tokens de A encontrados em B      
     return (encontrados / total) * 100                                              # Retorna a granularidade em porcentagem = (encontrados / total) * 100
+
+
+# Rotular nomes
+def rotular_nome(path):
+    nome, ext = os.path.splitext(os.path.basename(path))
+    ext = ext.lower()
+    if ext == ".txt":
+        return f"[TXT] {nome}"
+    elif ext == ".json":
+        return f"[JSON] {nome}"
+    else:
+        return f"[OUTRO] {nome}"

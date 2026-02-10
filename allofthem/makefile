@@ -8,8 +8,8 @@ EXEC=python3.13
 #Dir/exec
 PERSPECTIVA=scan/perspectiva.py 
 TRATA=scan/trata.py 
-MOSAICO=stitching/mosaico_cs.py
-INPUT=input
+MOSAICO =stitching/mosaico_cs.py
+INPUT?=input
 DEBUG=False # True or False
 
 

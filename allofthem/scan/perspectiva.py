@@ -157,7 +157,7 @@ def main():
     ]
 
     if not arquivos:
-        messagebox.showwarning("Aviso", "Nenhuma imagem encontrada.")
+        #messagebox.showwarning("Aviso", "Nenhuma imagem encontrada.")
         return
 
     for nome in arquivos:
@@ -176,7 +176,7 @@ def main():
             nome_saida = os.path.splitext(nome)[0] + "_perspectiva.jpg" #  ALTEREI DE PNG PARA JPG
             cv2.imwrite(os.path.join(PASTA_SAIDA, nome_saida), resultado)
 
-    messagebox.showinfo("Concluído", "Processamento finalizado.")
+    #messagebox.showinfo("Concluído", "Processamento finalizado.")
 
 if __name__ == "__main__":
     main()

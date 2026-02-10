@@ -100,7 +100,7 @@ def main():
     arquivos = [f for f in os.listdir(pasta_entrada) if f.lower().endswith(EXTENSOES)]
 
     if not arquivos:
-        messagebox.showwarning("Aviso", "Nenhuma imagem encontrada.")
+        #messagebox.showwarning("Aviso", "Nenhuma imagem encontrada.")
         return
 
     for nome in arquivos:
@@ -148,7 +148,7 @@ def main():
         caminho_final = os.path.join(pasta_limiar, f"{nome_base}_final.png")
         cv2.imwrite(caminho_final, final)
 
-    messagebox.showinfo("Concluído", "Pipeline finalizado com sucesso!")
+    #messagebox.showinfo("Concluído", "Pipeline finalizado com sucesso!")
 
 if __name__ == "__main__":
     main()

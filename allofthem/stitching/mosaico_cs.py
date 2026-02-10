@@ -28,6 +28,7 @@ As funções a seguir, permitem a axibição das imagens dentro do notbook
 
 
 def plot_image(img, figsize_in_inches=(10, 10)):
+    return
     fig, ax = plt.subplots(figsize=figsize_in_inches)
     ax.imshow(
         cv.cvtColor(img, cv.COLOR_BGR2RGB)
@@ -36,6 +37,7 @@ def plot_image(img, figsize_in_inches=(10, 10)):
 
 
 def plot_images(imgs, figsize_in_inches=(10, 10)):
+    return
     fig, axs = plt.subplots(1, len(imgs), figsize=figsize_in_inches)
     for col, img in enumerate(imgs):
         axs[col].imshow(
@@ -54,7 +56,8 @@ op = os.getenv("MOSAICO_ALGORISM", 4)  # 1 - ERCS ; 2 - SCS ; 3 - ERCSF ; 4 SCSF
 saltoFixo = os.getenv(
     "MOSAICO_SALTO", 2
 )  # Configura tamanho de salto caso op == 3 || 4;
-print(op, saltoFixo)
+
+debug = os.getenv("DEBUG_MOSAICO", False)
 
 
 def inicializarPivo(op=1, frames=[]):
@@ -355,7 +358,8 @@ def draw_matches(matches, base_image, sec_image, base_image_kp, sec_image_kp):
     match = cv.drawMatches(
         base_image, base_image_kp, sec_image, sec_image_kp, matches, None, **draw_params
     )
-    plot_image(match)
+    if debug == True:
+        plot_image(match)
 
 
 def get_featured_image(img, kp):
@@ -366,7 +370,7 @@ def get_featured_image(img, kp):
     return img
 
 
-def find_matches(base_image, sec_image, threshold, debug_draw, min_matches=10):
+def find_matches(base_image, sec_image, threshold, debug_draw=False, min_matches=10):
     sift = cv.SIFT_create()
 
     sec_image_mask = find_doc_mask(sec_image)
@@ -412,7 +416,7 @@ while 1:
         frames[idx_base],
         frames[idx_sec],
         threshold=0.7,
-        debug_draw=True,
+        debug_draw=debug,
         min_matches=100,
     )
     if matches != None:
@@ -420,16 +424,6 @@ while 1:
     else:
         idx_sec = reajustarAlvo(op, frames, idx_sec)
 
-# if op == 1:
-
-# del frames[idx_sec:]
-
-# elif op == 2:
-
-# del frames[:idx_sec]
-
-# idx_base = len(frames) - 1  # pivo
-# idx_sec = math.floor(len(frames) / 2)  # alvo
 
 """# Encontrando a homografia
 A Homografia é uma operação matricial que modifica pontos de um plano, levando-os a outro plano
@@ -444,7 +438,6 @@ def find_homography(kp1, kp2, matches):
 
 
 H = find_homography(base_image_kp, sec_image_kp, matches)
-# print(H)
 
 """# Aplica e ajusta a homografia
 A homografia é aplicada à segunda imagem para que possa ser colada na imagem base.
@@ -624,8 +617,10 @@ mosaico, _, _ = stitchImages(
     mask_base=gaussian_mask(frames[idx_base].shape),
     mask_sec=gaussian_mask(frames[idx_sec].shape),
 )
-print("mosaico")
-plot_image(mosaico)
+
+if debug == True:
+    plot_image(mosaico)
+
 cv.imwrite(result_file_name, mosaico)
 
 """# Cria um mosaico olhando para imagens visinhas
@@ -661,19 +656,14 @@ alvo = inicializarAlvo(op, frames)
 
 while 1:
 
-    print(len(frames))
-    print(alvo)
     img2 = frames[alvo]
 
     matches, base_image_kp, sec_image_kp = find_matches(
-        img1, img2, 0.75, debug_draw=True, min_matches=150
+        img1, img2, 0.75, debug_draw=False, min_matches=150
     )
     if matches == None:
 
         alvo = reajustarAlvo(op, frames, alvo)  # Volte uma imagem
-
-        print(len(frames))
-        print(alvo)
 
         if alvo == -1:
             print("Finalizando")
@@ -691,7 +681,9 @@ while 1:
         mask_base=mask_img1,
         mask_sec=mask_img2,
     )
-    plot_image(mosaico)
+    if debug == True:
+        plot_image(mosaico)
+
     cv.imwrite(result_file_name, mosaico)
 
     if op == 1:

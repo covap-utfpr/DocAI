@@ -27,13 +27,8 @@ export PASTA_SAIDA_TRATA=output/trata_output
 
 
 
-
-
-
-
-
-
-all:
+all: 
+	
 	make run_perspectiva
 	make run_mosaico_cs
 	make run_trata
@@ -42,7 +37,7 @@ all:
 
 run_perspectiva:
 
-	$(EXEC) $(PERSPECTIVA)
+	$(EXEC) $(PERSPECTIVA) 
 
 
 run_mosaico_cs:
